@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News - Apps Studio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+</head>
+<body>
+    <div id="headerContainer"></div>
+    <div class="header-spacer"></div>
+
+    <div class="section-title">
+        <span><i class="fas fa-newspaper" style="color:#ff6b35;margin-right:6px;"></i> News</span>
+    </div>
+
+    <div id="newsList" style="padding:0 12px;">
+        <div class="loading-screen"><div class="spinner"></div><p>Loading news...</p></div>
+    </div>
+
+    <div id="footerContainer"></div>
+    <div id="modalsContainer"></div>
+    <div id="navContainer"></div>
+
+    <script>
+        document.getElementById('headerContainer').innerHTML = renderHeader();
+        document.getElementById('footerContainer').innerHTML = renderFooter();
+        document.getElementById('modalsContainer').innerHTML = renderSharedModals();
+        document.getElementById('navContainer').innerHTML = renderBottomNav('home');
+
+        db.collection('news').orderBy('timestamp', 'desc').limit(20).get().then(function(snap) {
+            var list = document.getElementById('newsList');
+            if (snap.empty) {
+                list.innerHTML = '<div class="no-results"><i class="fas fa-newspaper"></i><p>No news yet</p></div>';
+                return;
+            }
+            var html = '';
+            snap.docs.forEach(function(doc) {
+                var n = doc.data();
+                html += '<div style="background:white;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">';
+                html += '<h3 style="font-size:15px;margin-bottom:6px;">' + (n.title || 'Update') + '</h3>';
+                html += '<p style="font-size:13px;color:#666;line-height:1.5;">' + (n.body || n.content || '') + '</p>';
+                if (n.timestamp) html += '<p style="font-size:11px;color:#aaa;margin-top:8px;">' + new Date(n.timestamp).toLocaleDateString() + '</p>';
+                html += '</div>';
+            });
+            list.innerHTML = html;
+        }).catch(function() {
+            document.getElementById('newsList').innerHTML = '<div class="no-results"><p>Failed to load news</p></div>';
+        });
+    </script>
+</body>
+</html>
