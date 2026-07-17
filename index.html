@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="https://i.supaimg.com/cd9a9717-a15f-44d3-bd7f-a1e5dcf50d81/8cd107a9-5f9b-4457-b838-9132d8e448cb.png">
+    <meta name="theme-color" content="#1a73e8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>Apps Studio - All Premium Unlock &amp; Mod Games Free Download</title>
+    <meta name="description" content="Apps Studio - Download All Premium Unlock Apps, Mod Games &amp; Free Subscriptions. 100% Safe &amp; Free.">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+</head>
+<body>
+    <div id="headerContainer"></div>
+    <div class="header-spacer"></div>
+
+    <div id="bannerSection" class="banner-section">
+        <div class="swiper bannerSwiper">
+            <div class="swiper-wrapper" id="swiperWrapper"></div>
+            <div class="swiper-pagination"></div>
+        </div>
+    </div>
+
+    <div id="mainContent">
+        <div class="loading-screen"><div class="spinner"></div><p>Loading apps...</p></div>
+    </div>
+
+    <div id="footerContainer"></div>
+    <div id="modalsContainer"></div>
+    <div id="navContainer"></div>
+
+    <script src="script.js"></script>
+    <script>
+        document.getElementById('headerContainer').innerHTML = renderHeader();
+        document.getElementById('footerContainer').innerHTML = renderFooter();
+        document.getElementById('modalsContainer').innerHTML = renderSharedModals();
+        document.getElementById('navContainer').innerHTML = renderBottomNav('home');
+    </script>
+</body>
+</html>
