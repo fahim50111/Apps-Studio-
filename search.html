@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search - Apps Studio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+</head>
+<body>
+    <div id="headerContainer"></div>
+    <div class="header-spacer"></div>
+
+    <div style="padding:12px 16px;">
+        <div style="display:flex;align-items:center;background:white;border-radius:12px;padding:10px 14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+            <i class="fas fa-search" style="color:#888;margin-right:10px;"></i>
+            <input id="searchInput" type="text" placeholder="Search apps..." style="flex:1;border:none;outline:none;font-size:15px;" autofocus>
+            <button onclick="document.getElementById('searchInput').value='';doSearch()" style="background:none;border:none;color:#888;cursor:pointer;"><i class="fas fa-times"></i></button>
+        </div>
+    </div>
+
+    <div id="defaultView" style="padding:0 16px;">
+        <p style="font-size:14px;font-weight:600;margin:12px 0;">Browse by Category</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <a href="categories.html?cat=social" style="background:white;padding:16px;border-radius:12px;text-decoration:none;color:#333;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.06);"><i class="fas fa-users" style="color:#1565c0;font-size:24px;display:block;margin-bottom:6px;"></i>Social</a>
+            <a href="categories.html?cat=games" style="background:white;padding:16px;border-radius:12px;text-decoration:none;color:#333;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.06);"><i class="fas fa-gamepad" style="color:#c62828;font-size:24px;display:block;margin-bottom:6px;"></i>Games</a>
+            <a href="categories.html?cat=tools" style="background:white;padding:16px;border-radius:12px;text-decoration:none;color:#333;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.06);"><i class="fas fa-wrench" style="color:#2e7d32;font-size:24px;display:block;margin-bottom:6px;"></i>Tools</a>
+            <a href="categories.html?cat=entertainment" style="background:white;padding:16px;border-radius:12px;text-decoration:none;color:#333;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.06);"><i class="fas fa-film" style="color:#e65100;font-size:24px;display:block;margin-bottom:6px;"></i>Entertainment</a>
+            <a href="categories.html?cat=education" style="background:white;padding:16px;border-radius:12px;text-decoration:none;color:#333;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.06);"><i class="fas fa-graduation-cap" style="color:#6a1b9a;font-size:24px;display:block;margin-bottom:6px;"></i>Education</a>
+            <a href="categories.html?cat=productivity" style="background:white;padding:16px;border-radius:12px;text-decoration:none;color:#333;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.06);"><i class="fas fa-briefcase" style="color:#00695c;font-size:24px;display:block;margin-bottom:6px;"></i>Productivity</a>
+        </div>
+    </div>
+
+    <div id="searchResults" style="display:none;padding-bottom:20px;"></div>
+
+    <div id="footerContainer"></div>
+    <div id="modalsContainer"></div>
+    <div id="navContainer"></div>
+
+    <script>
+        document.getElementById('headerContainer').innerHTML = renderHeader();
+        document.getElementById('footerContainer').innerHTML = renderFooter();
+        document.getElementById('modalsContainer').innerHTML = renderSharedModals();
+        document.getElementById('navContainer').innerHTML = renderBottomNav('home');
+
+        var allApps = [];
+        db.collection('apps').get().then(function(snap) {
+            allApps = snap.docs.map(function(d) { return processAppName(Object.assign({id: d.id}, d.data())); });
+        });
+
+        var timer;
+        document.getElementById('searchInput').addEventListener('input', function() {
+            clearTimeout(timer);
+            timer = setTimeout(doSearch, 300);
+        });
+
+        function doSearch() {
+            var q = document.getElementById('searchInput').value.trim().toLowerCase();
+            var def = document.getElementById('defaultView');
+            var res = document.getElementById('searchResults');
+            if (!q) {
+                def.style.display = 'block';
+                res.style.display = 'none';
+                return;
+            }
+            def.style.display = 'none';
+            res.style.display = 'block';
+            var matched = allApps.filter(function(a) {
+                return (a.name||'').toLowerCase().includes(q) || (a.displayName||'').toLowerCase().includes(q) || (a.category||'').toLowerCase().includes(q);
+            });
+            if (!matched.length) {
+                res.innerHTML = '<div class="no-results"><i class="fas fa-search"></i><p>No results for "' + q + '"</p></div>';
+                return;
+            }
+            var html = '';
+            matched.forEach(function(a) {
+                var n = a.displayName || a.name;
+                html += '<div class="ps-list-item" onclick="location.href=\'app.html?id=' + a.id + '\'">';
+                html += '<img src="' + (a.logo||'') + '" alt="' + n + '" loading="lazy" onerror="this.src=\'' + getErrorImg(n) + '\'">';
+                html += '<div class="ps-list-info"><div class="ps-list-name">' + n + '</div>';
+                html += '<div class="ps-list-sub">' + (a.category||'') + '</div></div>';
+                html += '<button class="ps-install-btn">Install</button></div>';
+            });
+            res.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
