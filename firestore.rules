@@ -1,40 +1,74 @@
 rules_version = '2';
+
+// ============================================================
+// Apps Studio — Firestore Security Rules
+// Principle: least privilege. Public site can READ catalog data,
+// can ONLY increment a download counter, and can ONLY submit a
+// size-limited app request. Everything else is denied.
+// Admin writes should be done from a trusted/authenticated context
+// (Firebase console, Admin SDK, or an authenticated admin user).
+// ============================================================
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    match /apps/{docId} {
+    // ---- Helper: is this an admin? (optional, future-proof) ----
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
+    // -------------------- apps (catalog) --------------------
+    match /apps/{appId} {
+      // Anyone can read the catalog.
       allow read: if true;
-      allow write: if request.auth != null;
+
+      // Public clients may ONLY bump the download counter by exactly +1
+      // and may not touch any other field.
+      allow update: if isAdmin() || (
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['downloads']) &&
+        request.resource.data.downloads is int &&
+        (
+          (resource.data.downloads is int && request.resource.data.downloads == resource.data.downloads + 1) ||
+          (!(resource.data.downloads is int) && request.resource.data.downloads == 1)
+        )
+      );
+
+      // Creating / deleting apps is admin-only.
+      allow create, delete: if isAdmin();
     }
 
-    match /banners/{docId} {
+    // -------------------- banners --------------------
+    match /banners/{bannerId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isAdmin();
     }
 
-    match /news/{docId} {
+    // -------------------- admin_notifications --------------------
+    // Admin app can publish notices; public website can read them.
+    match /admin_notifications/{noticeId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isAdmin();
     }
 
-    match /requests/{docId} {
-      allow read: if request.auth != null;
-      allow write: if true;
+    // -------------------- app_requests (user submissions) --------------------
+    match /app_requests/{reqId} {
+      // Requests are private: only admins can read/update/delete them.
+      allow read, update, delete: if isAdmin();
+
+      // Anyone may submit a request, but the payload is strictly validated
+      // to block junk / abuse / oversized writes.
+      allow create: if
+        request.resource.data.keys().hasOnly(['name', 'note', 'timestamp', 'createdAt']) &&
+        request.resource.data.name is string &&
+        request.resource.data.name.size() >= 1 &&
+        request.resource.data.name.size() <= 120 &&
+        request.resource.data.note is string &&
+        request.resource.data.note.size() <= 600;
     }
 
-    match /update_reports/{docId} {
-      allow read: if request.auth != null;
-      allow write: if true;
-    }
-
-    match /visitors/{docId} {
-      allow read: if request.auth != null;
-      allow write: if true;
-    }
-
-    match /admins/{uid} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
+    // -------------------- default deny --------------------
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
