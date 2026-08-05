@@ -1,154 +1,164 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  fetchAppsPage,
   fetchBanners,
   fetchTopApps,
-  fetchCategoryPreview,
-  type AppItem,
-  type Banner,
+  fetchTopByCategory,
 } from '../lib/firebase';
-import { CATEGORIES, CATEGORY_META, getName } from '../lib/util';
-import BannerSlider from '../components/BannerSlider';
-import { AppCard } from '../components/AppCard';
-import CategoryMarquee from '../components/CategoryMarquee';
-import { RowSkeleton } from '../components/Skeletons';
-import TopProgress from '../components/TopProgress';
+import type { AppItem, Banner } from '../lib/firebase';
+import { CATEGORIES, catLabel } from '../lib/util';
 import { updateSEO } from '../lib/seo';
-import { ArrowRight, Flame } from 'lucide-react';
+import BannerSlider from '../components/BannerSlider';
+import CategoryMarquee from '../components/CategoryMarquee';
+import TopProgress from '../components/TopProgress';
+import { AppCard, ListItem } from '../components/AppCard';
+import { RowSkeleton } from '../components/Skeletons';
+import { ArrowUpRight, Sparkles, TrendingUp } from 'lucide-react';
+
+function SectionHeader({
+  title,
+  to,
+  icon,
+}: {
+  title: string;
+  to?: string;
+  icon?: React.ReactNode;
+}) {
+  return (
+    <div className="mb-3.5 flex items-center justify-between px-1">
+      <h2 className="font-display flex items-center gap-2 text-base font-bold text-fg">
+        {icon}
+        {title}
+      </h2>
+      {to && (
+        <Link
+          to={to}
+          className="flex items-center gap-0.5 text-[11px] font-bold uppercase tracking-wider text-accent"
+        >
+          All <ArrowUpRight className="h-3.5 w-3.5" />
+        </Link>
+      )}
+    </div>
+  );
+}
+
+function Grid({ apps }: { apps: AppItem[] }) {
+  return (
+    <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">
+      {apps.map((a) => (
+        <AppCard key={a.id} app={a} />
+      ))}
+    </div>
+  );
+}
+
+const TOP_POOL = 24; // most-downloaded apps to pull for the home feed
+const CAT_PREVIEW = 6;
 
 export default function Home() {
   const [banners, setBanners] = useState<Banner[]>([]);
-  const [latest, setLatest] = useState<AppItem[]>([]);
-  const [trending, setTrending] = useState<AppItem[]>([]);
-  const [previews, setPreviews] = useState<Record<string, AppItem[]>>({});
+  const [topApps, setTopApps] = useState<AppItem[]>([]);
+  const [catApps, setCatApps] = useState<Record<string, AppItem[]>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     updateSEO({
-      title: 'Apps Studio — Free Premium Apps & Mod Games Download',
-      description:
-        'Download premium unlocked apps, mod games and free tools. Fast, safe and free on Apps Studio.',
+      jsonLd: {
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: 'Apps Studio',
+        url: window.location.origin,
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: `${window.location.origin}/search?q={search_term_string}`,
+          'query-input': 'required name=search_term_string',
+        },
+      },
     });
-  }, []);
 
-  useEffect(() => {
     let alive = true;
-    Promise.all([
-      fetchBanners(),
-      fetchAppsPage(12),
-      fetchTopApps(8),
-      ...CATEGORIES.slice(0, 4).map((c) =>
-        fetchCategoryPreview(c, 6).then((items) => [c, items] as const)
-      ),
-    ])
-      .then(([b, page, top, ...cats]) => {
+    Promise.all([fetchBanners(), fetchTopApps(TOP_POOL)])
+      .then(([b, top]) => {
         if (!alive) return;
         setBanners(b);
-        setLatest(page.items);
-        setTrending(top);
-        const map: Record<string, AppItem[]> = {};
-        cats.forEach(([c, items]) => {
-          map[c] = items;
-        });
-        setPreviews(map);
+        setTopApps(top);
       })
-      .finally(() => {
-        if (alive) setLoading(false);
+      .finally(() => alive && setLoading(false));
+
+    // per-category: most downloaded (tiny bounded queries)
+    CATEGORIES.forEach((cat) => {
+      fetchTopByCategory(cat, CAT_PREVIEW).then((items) => {
+        if (!alive || !items.length) return;
+        setCatApps((prev) => ({ ...prev, [cat]: items }));
       });
+    });
+
     return () => {
       alive = false;
     };
   }, []);
 
+  const spotlight = topApps.slice(0, 3);
+  const mostPopular = topApps.slice(3, 18);
+
   return (
-    <div className="pb-4">
+    <div className="pb-6">
       <TopProgress active={loading} />
       <BannerSlider banners={banners} loading={loading} />
 
-      <div className="mt-5">
+      {/* moving category buttons */}
+      <div className="mt-4">
         <CategoryMarquee />
       </div>
 
-      {/* Trending */}
-      <section className="mt-6 px-4">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-display flex items-center gap-2 text-base font-extrabold text-fg">
-            <Flame className="h-4.5 w-4.5 text-accent3" />
-            Trending Now
-          </h2>
-          <Link
-            to="/toplist"
-            className="flex items-center gap-1 text-xs font-bold text-accent"
-          >
-            See all <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
+      {loading ? (
+        <div className="mt-4">
+          <RowSkeleton title />
+          <RowSkeleton title />
         </div>
-        {loading ? (
-          <RowSkeleton />
-        ) : (
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">
-            {trending.map((a) => (
-              <AppCard key={a.id} app={a} />
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Latest */}
-      <section className="mt-8 px-4">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-display text-base font-extrabold text-fg">
-            Newly Added
-          </h2>
-          <Link
-            to="/categories"
-            className="flex items-center gap-1 text-xs font-bold text-accent"
-          >
-            Browse all <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-        </div>
-        {loading ? (
-          <RowSkeleton />
-        ) : (
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">
-            {latest.map((a) => (
-              <AppCard key={a.id} app={a} />
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Category previews */}
-      {CATEGORIES.slice(0, 4).map((cat) => {
-        const items = previews[cat] || [];
-        if (!loading && !items.length) return null;
-        const meta = CATEGORY_META[cat];
-        return (
-          <section key={cat} className="mt-8 px-4">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="font-display text-base font-extrabold text-fg">
-                {meta.label}
-              </h2>
-              <Link
-                to={`/categories?cat=${cat}`}
-                className="flex items-center gap-1 text-xs font-bold text-accent"
-              >
-                More <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </div>
-            {loading ? (
-              <RowSkeleton />
-            ) : (
-              <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">
-                {items.map((a) => (
-                  <AppCard key={a.id} app={a} />
+      ) : (
+        <div className="mt-4 space-y-8 px-4">
+          {spotlight.length > 0 && (
+            <section>
+              <SectionHeader
+                title="Spotlight"
+                to="/toplist"
+                icon={<Sparkles className="h-4 w-4 text-accent2" />}
+              />
+              <div className="space-y-3">
+                {spotlight.map((a, i) => (
+                  <ListItem key={a.id} app={a} rank={i} />
                 ))}
               </div>
-            )}
-          </section>
-        );
-      })}
+            </section>
+          )}
+
+          {mostPopular.length > 0 && (
+            <section>
+              <SectionHeader
+                title="Most Popular"
+                to="/toplist"
+                icon={<TrendingUp className="h-4 w-4 text-accent" />}
+              />
+              <Grid apps={mostPopular} />
+            </section>
+          )}
+
+          {CATEGORIES.map((cat) => {
+            const inCat = catApps[cat];
+            if (!inCat || !inCat.length) return null;
+            return (
+              <section key={cat}>
+                <SectionHeader
+                  title={catLabel(cat)}
+                  to={`/categories?cat=${cat}`}
+                />
+                <Grid apps={inCat} />
+              </section>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
