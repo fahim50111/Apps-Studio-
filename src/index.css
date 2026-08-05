@@ -1,124 +1,457 @@
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap');
+@import 'tailwindcss';
 
 @theme {
-  --font-sans: "Inter", system-ui, sans-serif;
-  --font-display: "Poppins", system-ui, sans-serif;
+  --font-display: 'Sora', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
 
-  --color-bg: #eef7ff;
-  --color-panel: #ffffff;
-  --color-panel2: #f5f9ff;
-  --color-fg: #0f172a;
-  --color-mute: #64748b;
-  --color-line: #e2e8f0;
-  --color-accent: #1a73e8;
-  --color-accent2: #0ea5e9;
-  --color-accent3: #ef4444;
-  --color-ink: #ffffff;
+  /* theme-aware brand colors — month palettes override these in light mode */
+  --color-ink: var(--c-on-accent);
+  --color-accent: var(--c-accent);
+  --color-accent2: var(--c-accent2);
+  --color-accent3: var(--c-accent3);
+
+  /* theme-aware tokens — resolve to runtime CSS vars set below */
+  --color-bg: var(--c-bg);
+  --color-fg: var(--c-fg);
+  --color-panel: var(--c-panel);
+  --color-panel2: var(--c-panel2);
+  --color-line: var(--c-line);
+  --color-mute: var(--c-mute);
 }
 
-/* Dark theme overrides */
+/* ---- Browser/no-JS fallback: bright January design ---- */
+:root {
+  --c-bg: #eef7ff;
+  --c-fg: #152033;
+  --c-panel: #ffffff;
+  --c-panel2: #dfefff;
+  --c-line: #c8d9ec;
+  --c-mute: #5b6a7d;
+  --c-accent: #1d9bf0;
+  --c-accent2: #6b8cff;
+  --c-accent3: #00bcd4;
+  --c-on-accent: #ffffff;
+  --glass-bg: rgba(255, 255, 255, 0.78);
+  --glow-1: rgba(29, 155, 240, 0.14);
+  --glow-2: rgba(0, 188, 212, 0.12);
+  color-scheme: light;
+}
+
+/* ---- Dark theme ---- */
 .theme-dark {
-  --color-bg: #0a0a0f;
-  --color-panel: #12121a;
-  --color-panel2: #1a1a24;
-  --color-fg: #f1f5f9;
-  --color-mute: #94a3b8;
-  --color-line: #27272a;
-  --color-accent: #3b82f6;
-  --color-accent2: #38bdf8;
-  --color-accent3: #f87171;
-  --color-ink: #0f172a;
+  --c-bg: #0a0a0f;
+  --c-fg: #eaeaf2;
+  --c-panel: #12121a;
+  --c-panel2: #1a1a26;
+  --c-line: #26263a;
+  --c-mute: #8b8ba7;
+  --c-accent: #c8ff00;
+  --c-accent2: #7c5cff;
+  --c-accent3: #ff5c8a;
+  --c-on-accent: #0a0a0f;
+  --glass-bg: rgba(18, 18, 26, 0.72);
+  --glow-1: rgba(124, 92, 255, 0.14);
+  --glow-2: rgba(200, 255, 0, 0.08);
+  color-scheme: dark;
 }
 
-/* Monthly light palettes (only applied in light mode) */
-.theme-month-1  { --color-bg: #fef2f2; --color-accent: #dc2626; }
-.theme-month-2  { --color-bg: #fff7ed; --color-accent: #ea580c; }
-.theme-month-3  { --color-bg: #fefce8; --color-accent: #ca8a04; }
-.theme-month-4  { --color-bg: #f0fdf4; --color-accent: #16a34a; }
-.theme-month-5  { --color-bg: #ecfdf5; --color-accent: #059669; }
-.theme-month-6  { --color-bg: #f0f9ff; --color-accent: #0284c7; }
-.theme-month-7  { --color-bg: #eff6ff; --color-accent: #2563eb; }
-.theme-month-8  { --color-bg: #eef2ff; --color-accent: #4f46e5; }
-.theme-month-9  { --color-bg: #f5f3ff; --color-accent: #7c3aed; }
-.theme-month-10 { --color-bg: #fdf4ff; --color-accent: #c026d3; }
-.theme-month-11 { --color-bg: #fff1f2; --color-accent: #e11d48; }
-.theme-month-12 { --color-bg: #f8fafc; --color-accent: #0f172a; }
+/* ---- Light theme: default is January if JS/month class has not applied yet ---- */
+.theme-light {
+  --c-bg: #eef7ff;
+  --c-fg: #152033;
+  --c-panel: #ffffff;
+  --c-panel2: #dfefff;
+  --c-line: #c8d9ec;
+  --c-mute: #5b6a7d;
+  --c-accent: #1d9bf0;
+  --c-accent2: #6b8cff;
+  --c-accent3: #00bcd4;
+  --c-on-accent: #ffffff;
+  --glass-bg: rgba(255, 255, 255, 0.78);
+  --glow-1: rgba(29, 155, 240, 0.14);
+  --glow-2: rgba(0, 188, 212, 0.12);
+  color-scheme: light;
+}
 
-html, body, #root {
-  min-height: 100%;
+/*
+  Bright mode has 12 calendar-based UI designs. The current month is applied
+  by src/lib/theme.tsx as .theme-month-1 ... .theme-month-12.
+*/
+.theme-light.theme-month-1 {
+  /* January — Frost Blue */
+  --c-bg: #eef7ff;
+  --c-fg: #152033;
+  --c-panel: #ffffff;
+  --c-panel2: #dfefff;
+  --c-line: #c8d9ec;
+  --c-mute: #5b6a7d;
+  --c-accent: #1d9bf0;
+  --c-accent2: #6b8cff;
+  --c-accent3: #00bcd4;
+  --c-on-accent: #ffffff;
+  --glow-1: rgba(29, 155, 240, 0.14);
+  --glow-2: rgba(0, 188, 212, 0.12);
+}
+.theme-light.theme-month-2 {
+  /* February — Rose */
+  --c-bg: #fff1f7;
+  --c-fg: #2d1721;
+  --c-panel: #ffffff;
+  --c-panel2: #ffe1ed;
+  --c-line: #f5c3d5;
+  --c-mute: #7a5a68;
+  --c-accent: #e91e63;
+  --c-accent2: #b44cff;
+  --c-accent3: #ff7aa8;
+  --c-on-accent: #ffffff;
+  --glow-1: rgba(233, 30, 99, 0.13);
+  --glow-2: rgba(180, 76, 255, 0.1);
+}
+.theme-light.theme-month-3 {
+  /* March — Mint */
+  --c-bg: #effff7;
+  --c-fg: #13241b;
+  --c-panel: #ffffff;
+  --c-panel2: #d9f7e9;
+  --c-line: #bde8d1;
+  --c-mute: #537064;
+  --c-accent: #16a34a;
+  --c-accent2: #10b981;
+  --c-accent3: #2dd4bf;
+  --c-on-accent: #ffffff;
+  --glow-1: rgba(22, 163, 74, 0.13);
+  --glow-2: rgba(45, 212, 191, 0.12);
+}
+.theme-light.theme-month-4 {
+  /* April — Sakura */
+  --c-bg: #fff8fb;
+  --c-fg: #2b1c23;
+  --c-panel: #ffffff;
+  --c-panel2: #ffe8f1;
+  --c-line: #f3cedd;
+  --c-mute: #795d69;
+  --c-accent: #ff5c8a;
+  --c-accent2: #fb7185;
+  --c-accent3: #f59e0b;
+  --c-on-accent: #ffffff;
+  --glow-1: rgba(255, 92, 138, 0.14);
+  --glow-2: rgba(245, 158, 11, 0.1);
+}
+.theme-light.theme-month-5 {
+  /* May — Emerald */
+  --c-bg: #f0fff4;
+  --c-fg: #13251b;
+  --c-panel: #ffffff;
+  --c-panel2: #ddf7e7;
+  --c-line: #bee8cf;
+  --c-mute: #536f5d;
+  --c-accent: #059669;
+  --c-accent2: #22c55e;
+  --c-accent3: #84cc16;
+  --c-on-accent: #ffffff;
+  --glow-1: rgba(5, 150, 105, 0.13);
+  --glow-2: rgba(132, 204, 22, 0.12);
+}
+.theme-light.theme-month-6 {
+  /* June — Sunshine */
+  --c-bg: #fffbea;
+  --c-fg: #302407;
+  --c-panel: #ffffff;
+  --c-panel2: #fff1bd;
+  --c-line: #efd98a;
+  --c-mute: #776332;
+  --c-accent: #f59e0b;
+  --c-accent2: #eab308;
+  --c-accent3: #fb7185;
+  --c-on-accent: #1b1200;
+  --glow-1: rgba(245, 158, 11, 0.18);
+  --glow-2: rgba(251, 113, 133, 0.09);
+}
+.theme-light.theme-month-7 {
+  /* July — Ocean */
+  --c-bg: #ecfeff;
+  --c-fg: #092635;
+  --c-panel: #ffffff;
+  --c-panel2: #d4f7fb;
+  --c-line: #aee8ef;
+  --c-mute: #4d6d75;
+  --c-accent: #0891b2;
+  --c-accent2: #2563eb;
+  --c-accent3: #14b8a6;
+  --c-on-accent: #ffffff;
+  --glow-1: rgba(8, 145, 178, 0.15);
+  --glow-2: rgba(37, 99, 235, 0.09);
+}
+.theme-light.theme-month-8 {
+  /* August — Mango */
+  --c-bg: #fff7ed;
+  --c-fg: #311c0a;
+  --c-panel: #ffffff;
+  --c-panel2: #ffead2;
+  --c-line: #f5c998;
+  --c-mute: #785b3d;
+  --c-accent: #f97316;
+  --c-accent2: #ef4444;
+  --c-accent3: #eab308;
+  --c-on-accent: #ffffff;
+  --glow-1: rgba(249, 115, 22, 0.16);
+  --glow-2: rgba(239, 68, 68, 0.1);
+}
+.theme-light.theme-month-9 {
+  /* September — Amber Study */
+  --c-bg: #fffbeb;
+  --c-fg: #2c2412;
+  --c-panel: #ffffff;
+  --c-panel2: #fef3c7;
+  --c-line: #ead69a;
+  --c-mute: #746745;
+  --c-accent: #d97706;
+  --c-accent2: #7c3aed;
+  --c-accent3: #ca8a04;
+  --c-on-accent: #ffffff;
+  --glow-1: rgba(217, 119, 6, 0.15);
+  --glow-2: rgba(124, 58, 237, 0.08);
+}
+.theme-light.theme-month-10 {
+  /* October — Pumpkin */
+  --c-bg: #fff5eb;
+  --c-fg: #301a0c;
+  --c-panel: #ffffff;
+  --c-panel2: #ffe3c5;
+  --c-line: #efc29a;
+  --c-mute: #765842;
+  --c-accent: #ea580c;
+  --c-accent2: #9333ea;
+  --c-accent3: #dc2626;
+  --c-on-accent: #ffffff;
+  --glow-1: rgba(234, 88, 12, 0.17);
+  --glow-2: rgba(147, 51, 234, 0.08);
+}
+.theme-light.theme-month-11 {
+  /* November — Violet */
+  --c-bg: #f7f2ff;
+  --c-fg: #221633;
+  --c-panel: #ffffff;
+  --c-panel2: #eadcff;
+  --c-line: #d6c1f2;
+  --c-mute: #665475;
+  --c-accent: #7c3aed;
+  --c-accent2: #4f46e5;
+  --c-accent3: #ec4899;
+  --c-on-accent: #ffffff;
+  --glow-1: rgba(124, 58, 237, 0.15);
+  --glow-2: rgba(236, 72, 153, 0.09);
+}
+.theme-light.theme-month-12 {
+  /* December — Winter Night Bright */
+  --c-bg: #f0f9ff;
+  --c-fg: #102033;
+  --c-panel: #ffffff;
+  --c-panel2: #dff4ff;
+  --c-line: #bfe0f2;
+  --c-mute: #546b80;
+  --c-accent: #0284c7;
+  --c-accent2: #0ea5e9;
+  --c-accent3: #a855f7;
+  --c-on-accent: #ffffff;
+  --glow-1: rgba(2, 132, 199, 0.14);
+  --glow-2: rgba(168, 85, 247, 0.09);
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  margin: 0;
   font-family: var(--font-sans);
-  background: var(--color-bg);
-  color: var(--color-fg);
-  -webkit-font-smoothing: antialiased;
+  background: var(--c-bg);
+  color: var(--c-fg);
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
+}
+
+/* radial ambient glow behind everything */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(60% 40% at 15% 0%, var(--glow-1), transparent 70%),
+    radial-gradient(50% 35% at 90% 5%, var(--glow-2), transparent 70%);
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  overflow-x: clip;
+}
+
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
 }
 
 .font-display {
   font-family: var(--font-display);
 }
 
-.glass {
-  background: color-mix(in srgb, var(--color-panel) 85%, transparent);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-}
-
-.skeleton {
-  background: linear-gradient(90deg, var(--color-panel2) 25%, var(--color-line) 50%, var(--color-panel2) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.4s ease infinite;
-}
-
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-.topbar-pulse {
-  animation: topbar 1.2s ease-in-out infinite;
-}
-
-@keyframes topbar {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(400%); }
-}
-
-.marquee-track {
-  display: flex;
-  width: max-content;
-  animation: marquee 30s linear infinite;
-}
-
-.marquee-track:hover {
-  animation-play-state: paused;
-}
-
-@keyframes marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-
-.anim-slide-up {
-  animation: slideUp 0.2s ease-out;
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
 
-/* Safe area for mobile bottom nav */
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--c-panel) 25%,
+    var(--c-panel2) 50%,
+    var(--c-panel) 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.anim-slide-up {
+  animation: slideUp 0.4s ease both;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.anim-fade {
+  animation: fadeIn 0.5s ease both;
+}
+
+/* swiper pagination accent */
+.swiper-pagination-bullet {
+  background: #ffffff !important;
+  opacity: 0.4 !important;
+}
+.swiper-pagination-bullet-active {
+  background: var(--color-accent) !important;
+  opacity: 1 !important;
+  width: 22px !important;
+  border-radius: 4px !important;
+}
+
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* Responsive polish for very small phones (320px–360px). */
 .mobile-bottom-nav {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+.mobile-nav-item {
+  min-width: 0;
+}
+
+.ad-inner {
+  width: 300px;
+  max-width: 300px;
+}
+
+@media (max-width: 380px) {
+  .mobile-bottom-nav {
+    padding-left: 0.35rem;
+    padding-right: 0.35rem;
+  }
+
+  .mobile-bottom-nav nav {
+    gap: 0.1rem;
+    padding: 0.3rem;
+  }
+
+  .mobile-nav-item {
+    padding-left: 0.55rem !important;
+    padding-right: 0.55rem !important;
+    font-size: 9px !important;
+    letter-spacing: 0.03em !important;
+  }
+
+  .ad-inner {
+    transform: scale(0.88);
+    transform-origin: top center;
+    margin-bottom: -30px;
+  }
+}
+
+@media (min-width: 768px) {
+  .mobile-bottom-nav {
+    padding-bottom: 1.25rem;
+  }
+}
+
+/* moving category chips (marquee) */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 22s linear infinite;
+}
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+}
+
+/* app-wide top progress bar */
+@keyframes barPulse {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
+}
+.topbar-pulse {
+  animation: barPulse 1s ease-in-out infinite;
 }
