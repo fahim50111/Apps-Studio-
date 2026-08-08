@@ -1,36 +1,33 @@
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { useViewportQuery } from '../lib/viewporter';
+import { peekCache } from '../lib/cache';
 
-type Props = {
-  children: ReactNode;
+/**
+ * Renders children only after the section enters the viewport.
+ * Optional cacheKey shows instant content from ViewPorter cache while loading.
+ */
+export default function ViewportSection({
+  cacheKey,
+  loader,
+  skeleton,
+  children,
+  className,
+}: {
+  cacheKey: string;
+  loader: () => Promise<unknown>;
+  skeleton?: React.ReactNode;
+  children: (data: unknown, loading: boolean) => React.ReactNode;
   className?: string;
-  threshold?: number;
-};
-
-export default function ViewportSection({ children, className = '', threshold = 0.15 }: Props) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold }
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [threshold]);
+}) {
+  const { ref, data, loading } = useViewportQuery(cacheKey, loader, {
+    initial: () => peekCache(cacheKey),
+    rootMargin: '280px 0px',
+  });
 
   return (
-    <div ref={ref} className={`viewport-section ${visible ? 'visible' : ''} ${className}`}>
-      {children}
+    <div ref={ref} className={className}>
+      {data === undefined && loading
+        ? skeleton || null
+        : children(data, loading)}
     </div>
   );
 }
