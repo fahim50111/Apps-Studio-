@@ -5,26 +5,43 @@ type Props = {
   src?: string;
   alt: string;
   className?: string;
+  /** When true, loads eagerly and hints high fetch priority (LCP/hero). */
+  priority?: boolean;
+  fallbackName?: string;
   onClick?: MouseEventHandler<HTMLImageElement>;
-  loading?: 'lazy' | 'eager';
 };
 
-export default function AppImage({ src, alt, className = '', onClick, loading = 'lazy' }: Props) {
-  const finalSrc = useMemo(() => src || fallbackLogo, [src]);
+/**
+ * Image with lazy-by-default loading and optional priority for hero/LCP assets.
+ */
+export default function AppImage({
+  src,
+  alt,
+  className,
+  priority = false,
+  fallbackName,
+  onClick,
+}: Props) {
+  const fallback = useMemo(
+    () => fallbackLogo(fallbackName || alt || 'A'),
+    [fallbackName, alt]
+  );
+  const imageSrc = src || fallback;
 
   return (
     <img
-      src={finalSrc}
+      key={imageSrc}
+      src={imageSrc}
       alt={alt}
-      className={className}
+      loading={priority ? 'eager' : 'lazy'}
+      decoding={priority ? 'sync' : 'async'}
+      fetchPriority={priority ? 'high' : 'auto'}
       onClick={onClick}
-      loading={loading}
       onError={(e) => {
-        const target = e.currentTarget;
-        if (target.src !== fallbackLogo) {
-          target.src = fallbackLogo;
-        }
+        const el = e.currentTarget;
+        if (el.src !== fallback) el.src = fallback;
       }}
+      className={className}
     />
   );
 }
