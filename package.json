@@ -5,15 +5,20 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview",
+    "build": "npx tsc -b && npx vite build",
+    "lint": "npx eslint .",
+    "preview": "npx vite preview",
+    "firebase:login": "firebase login",
+    "firebase:build": "npm run build",
     "firebase:deploy": "npm run build && firebase deploy --only hosting",
-    "firebase:serve": "npm run build && firebase emulators:start --only hosting"
+    "firebase:deploy:all": "npm run build && firebase deploy",
+    "firebase:rules": "firebase deploy --only firestore:rules,firestore:indexes",
+    "firebase:serve": "npm run build && firebase emulators:start --only hosting",
+    "predeploy": "npm run build && npm run lint"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.1",
-    "firebase": "^12.17.0",
+    "firebase": "^12.17.1",
     "framer-motion": "^12.35.0",
     "lucide-react": "^0.577.0",
     "react": "^19.2.0",
@@ -31,6 +36,7 @@
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
+    "firebase-tools": "^14.27.0",
     "globals": "^16.5.0",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.48.0",
