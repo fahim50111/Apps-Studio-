@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { fetchTopApps } from '../lib/firebase';
-import type { AppItem } from '../lib/firebase';
+import type { AppItem } from '../lib/types';
+import { peekCache } from '../lib/cache';
 import { ListItem } from '../components/AppCard';
 import { ListSkeleton } from '../components/Skeletons';
 import TopProgress from '../components/TopProgress';
@@ -11,8 +12,13 @@ import { Flame } from 'lucide-react';
 const TOP_MAX = 50;
 
 export default function TopList() {
-  const [apps, setApps] = useState<AppItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [apps, setApps] = useState<AppItem[]>(
+    () =>
+      peekCache<AppItem[]>(`top:${TOP_MAX}`) ||
+      peekCache<AppItem[]>('top:24') ||
+      []
+  );
+  const [loading, setLoading] = useState(apps.length === 0);
 
   useEffect(() => {
     updateSEO({
@@ -50,7 +56,8 @@ export default function TopList() {
           {apps.map((a, i) => (
             <div key={a.id}>
               <ListItem app={a} rank={i} />
-              {i === 4 && (
+              {/* Banner under every 5th app (5, 10, 15, …) */}
+              {(i + 1) % 5 === 0 && (
                 <div className="my-3">
                   <AdBanner compact />
                 </div>
