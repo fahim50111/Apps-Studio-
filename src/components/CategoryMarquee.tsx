@@ -1,15 +1,27 @@
 import { Link } from 'react-router-dom';
 import { CATEGORIES, CATEGORY_META } from '../lib/util';
-import * as Icons from 'lucide-react';
+import {
+  Users,
+  Gamepad2,
+  Wrench,
+  Clapperboard,
+  GraduationCap,
+  Briefcase,
+  type LucideIcon,
+} from 'lucide-react';
 
-type IconMap = Record<
-  string,
-  React.FC<{ className?: string; style?: React.CSSProperties }>
->;
+const ICON_MAP: Record<string, LucideIcon> = {
+  Users,
+  Gamepad2,
+  Wrench,
+  Clapperboard,
+  GraduationCap,
+  Briefcase,
+};
 
 function Chip({ cat }: { cat: string }) {
   const meta = CATEGORY_META[cat];
-  const Icon = (Icons as unknown as IconMap)[meta.icon];
+  const Icon = ICON_MAP[meta.icon];
   return (
     <Link
       to={`/categories?cat=${cat}`}
