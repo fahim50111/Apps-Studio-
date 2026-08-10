@@ -1,33 +1,21 @@
 import { Link } from 'react-router-dom';
-import type { AppItem } from '../lib/firebase';
-import { getName, catLabel, fallbackLogo, formatCount } from '../lib/util';
+import type { AppItem } from '../lib/types';
+import { getName, catLabel, formatCount } from '../lib/util';
+import AppImage from './AppImage';
 import { ArrowDownToLine, Download } from 'lucide-react';
-
-function Logo({ app, className }: { app: AppItem; className?: string }) {
-  const name = getName(app);
-  return (
-    <img
-      src={app.logo || fallbackLogo(name)}
-      alt={name}
-      loading="lazy"
-      onError={(e) => {
-        (e.target as HTMLImageElement).src = fallbackLogo(name);
-      }}
-      className={className}
-    />
-  );
-}
 
 export function AppCard({ app }: { app: AppItem }) {
   const name = getName(app);
   return (
     <Link
       to={`/app/${app.id}`}
-      className="group relative flex w-full flex-col items-center overflow-hidden rounded-2xl border border-line/70 bg-panel p-3 transition-all hover:-translate-y-1 hover:border-accent/40 hover:bg-panel2"
+      className="group relative flex w-full flex-col items-center overflow-hidden rounded-2xl border border-line/70 bg-panel p-3 transition-all hover:-translate-y-1 hover:border-accent/40 hover:bg-panel2 shine-hover card-pop"
     >
       <div className="relative mb-2.5">
-        <Logo
-          app={app}
+        <AppImage
+          src={app.logo}
+          alt={name}
+          fallbackName={name}
           className="h-16 w-16 rounded-2xl object-cover ring-1 ring-white/5"
         />
         {app.isMod && (
@@ -52,7 +40,7 @@ export function ListItem({ app, rank }: { app: AppItem; rank?: number }) {
   return (
     <Link
       to={`/app/${app.id}`}
-      className="group flex min-w-0 items-center gap-2.5 rounded-2xl border border-line/70 bg-panel p-3 transition-all hover:border-accent/40 hover:bg-panel2 sm:gap-3"
+      className="group flex min-w-0 items-center gap-2.5 rounded-2xl border border-line/70 bg-panel p-3 transition-all hover:border-accent/40 hover:bg-panel2 sm:gap-3 shine-hover"
     >
       {rank !== undefined && (
         <div
@@ -63,8 +51,10 @@ export function ListItem({ app, rank }: { app: AppItem; rank?: number }) {
           {rank + 1}
         </div>
       )}
-      <Logo
-        app={app}
+      <AppImage
+        src={app.logo}
+        alt={name}
+        fallbackName={name}
         className="h-14 w-14 shrink-0 rounded-xl object-cover ring-1 ring-white/5"
       />
       <div className="min-w-0 flex-1">

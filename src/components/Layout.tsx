@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Flame, Send, User, Search, LayoutGrid, Zap } from 'lucide-react';
+import { Home, Flame, Send, User, Search, LayoutGrid } from 'lucide-react';
 import Footer from './Footer';
+import LogoMark from './LogoMark';
 import ThemeToggle from './ThemeToggle';
 import NotificationPermissionPrompt from './NotificationPermissionPrompt';
 import { AdRouteScripts, ClickAdController } from './AdScripts';
@@ -15,9 +16,7 @@ function Header({ hidden }: { hidden: boolean }) {
     >
       <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3.5">
         <Link to="/" className="flex min-w-0 items-center gap-2.5">
-          <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-accent">
-            <Zap className="h-5 w-5 text-ink" strokeWidth={2.6} />
-          </div>
+          <LogoMark className="h-9 w-9 shrink-0" />
           <div className="min-w-0 leading-none">
             <h1 className="font-display truncate text-base font-extrabold tracking-tight text-fg sm:text-lg">
               APPS<span className="text-accent">STUDIO</span>
@@ -65,7 +64,7 @@ function BottomNav({ hidden }: { hidden: boolean }) {
             <Link
               key={to}
               to={to}
-              className={`mobile-nav-item flex flex-col items-center gap-1 rounded-xl px-3.5 py-2 text-[10px] font-bold uppercase tracking-wider transition-all ${
+              className={`mobile-nav-item shine-hover relative flex flex-col items-center gap-1 rounded-xl px-3.5 py-2 text-[10px] font-bold uppercase tracking-wider transition-all ${
                 active ? 'bg-accent text-ink' : 'text-mute hover:text-fg'
               }`}
             >
