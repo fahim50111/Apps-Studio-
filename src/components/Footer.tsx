@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { openExternal } from '../lib/security';
-import { Zap, Mail, MessageCircle, ShieldCheck, Download } from 'lucide-react';
+import { Mail, MessageCircle, ShieldCheck, Download } from 'lucide-react';
+import LogoMark from './LogoMark';
 
 const CONTACT_EMAIL = 'fahinur.xo.je';
 const WHATSAPP_URL = 'https://wa.me/message/L3EUGB2Q7GHXN1';
@@ -15,9 +16,7 @@ export default function Footer() {
           {/* Brand */}
           <div>
             <Link to="/" className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent">
-                <Zap className="h-5 w-5 text-ink" strokeWidth={2.6} />
-              </span>
+              <LogoMark className="h-9 w-9 shrink-0" />
               <span className="font-display text-lg font-extrabold tracking-tight text-fg">
                 APPS<span className="text-accent">STUDIO</span>
               </span>
