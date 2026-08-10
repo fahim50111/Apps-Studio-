@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { updateSEO } from '../lib/seo';
 import { openExternal } from '../lib/security';
 import {
-  Zap,
   ShieldCheck,
   Download,
   Layers,
@@ -12,6 +11,7 @@ import {
   MessageCircle,
   Sparkles,
 } from 'lucide-react';
+import LogoMark from '../components/LogoMark';
 
 const CONTACT_EMAIL = 'fahinur.xo.je';
 const WHATSAPP_URL = 'https://wa.me/message/L3EUGB2Q7GHXN1';
@@ -54,8 +54,8 @@ export default function About() {
       <div className="relative overflow-hidden rounded-3xl border border-line/70 bg-panel p-7 text-center">
         <div className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full bg-accent2/10 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-12 -left-12 h-44 w-44 rounded-full bg-accent/10 blur-3xl" />
-        <div className="relative mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-accent">
-          <Zap className="h-8 w-8 text-ink" strokeWidth={2.6} />
+        <div className="relative mx-auto mb-4 flex h-16 w-16 items-center justify-center">
+          <LogoMark className="h-16 w-16" />
         </div>
         <h1 className="font-display text-2xl font-extrabold text-fg">
           About Apps Studio
