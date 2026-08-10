@@ -1,16 +1,33 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { fetchAppsPage } from '../lib/firebase';
-import type { AppItem } from '../lib/firebase';
-import type { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
+import type { AppItem, PageCursor } from '../lib/types';
 import { CATEGORIES, CATEGORY_META, catLabel } from '../lib/util';
 import { AppCard } from '../components/AppCard';
 import { RowSkeleton, CardSkeleton } from '../components/Skeletons';
 import { useResponsivePageSize } from '../lib/useResponsivePage';
 import TopProgress from '../components/TopProgress';
 import { updateSEO } from '../lib/seo';
-import { Loader2, PackageOpen } from 'lucide-react';
-import * as Icons from 'lucide-react';
+import {
+  Loader2,
+  PackageOpen,
+  Users,
+  Gamepad2,
+  Wrench,
+  Clapperboard,
+  GraduationCap,
+  Briefcase,
+  type LucideIcon,
+} from 'lucide-react';
+
+const ICON_MAP: Record<string, LucideIcon> = {
+  Users,
+  Gamepad2,
+  Wrench,
+  Clapperboard,
+  GraduationCap,
+  Briefcase,
+};
 
 export default function Categories() {
   // page size adapts to the screen: enough rows to fill the viewport + spare
@@ -21,7 +38,7 @@ export default function Categories() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
 
-  const cursorRef = useRef<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const cursorRef = useRef<PageCursor | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const loadingMoreRef = useRef(false);
   const hasMoreRef = useRef(false);
@@ -191,14 +208,7 @@ function Chip({
   activeState: boolean;
   onClick: () => void;
 }) {
-  const Icon = icon
-    ? (
-        Icons as unknown as Record<
-          string,
-          React.FC<{ className?: string; style?: React.CSSProperties }>
-        >
-      )[icon]
-    : null;
+  const Icon = icon ? ICON_MAP[icon] : null;
   return (
     <button
       onClick={onClick}
