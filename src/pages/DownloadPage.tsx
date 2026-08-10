@@ -1,11 +1,28 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { fetchAppById, incrementDownload } from '../lib/firebase';
-import type { AppItem, DownloadLink } from '../lib/firebase';
-import { getName, catLabel, fallbackLogo, getDownloadLinks } from '../lib/util';
+import type { AppItem, DownloadLink } from '../lib/types';
+import {
+  getName,
+  catLabel,
+  getDownloadLinks,
+  getAppUpdatedDate,
+  getLinkUpdatedAt,
+  formatRelativeDate,
+} from '../lib/util';
+import { trackAppView } from '../lib/history';
 import { updateSEO, resetSEO } from '../lib/seo';
 import { openExternal } from '../lib/security';
-import { ArrowLeft, Download, Info, ShieldCheck, Package } from 'lucide-react';
+import AppImage from '../components/AppImage';
+import {
+  ArrowLeft,
+  Download,
+  Info,
+  ShieldCheck,
+  Package,
+  CalendarDays,
+  Clock3,
+} from 'lucide-react';
 
 export default function DownloadPage() {
   const { id } = useParams<{ id: string }>();
@@ -25,6 +42,7 @@ export default function DownloadPage() {
         if (!a) setNotFound(true);
         else {
           setApp(a);
+          trackAppView(a);
           updateSEO({
             title: `Download ${getName(a)} — All Versions | Apps Studio`,
             description: `Choose your version and download ${getName(
@@ -41,8 +59,8 @@ export default function DownloadPage() {
     };
   }, [id]);
 
-  const go = (l: DownloadLink) => {
-    if (!app) return;
+  const handleDownload = (l: DownloadLink) => {
+    if (!app || !l.url) return;
     setBusy(l.url);
     incrementDownload(app.id);
     openExternal(l.url);
@@ -79,6 +97,8 @@ export default function DownloadPage() {
 
   const name = getName(app);
   const links = getDownloadLinks(app);
+  // Prefer updatedAt so the card shows latest update, not first-upload date.
+  const updatedOn = getAppUpdatedDate(app);
 
   return (
     <div className="px-4 py-5">
@@ -91,22 +111,30 @@ export default function DownloadPage() {
       </button>
 
       <div className="flex items-center gap-4 rounded-3xl border border-line/70 bg-panel p-4">
-        <img
-          src={app.logo || fallbackLogo(name)}
+        <AppImage
+          src={app.logo}
           alt={name}
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = fallbackLogo(name);
-          }}
+          priority
+          fallbackName={name}
           className="h-16 w-16 rounded-2xl object-cover ring-1 ring-white/10"
         />
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <h1 className="font-display truncate text-lg font-extrabold text-fg">
             {name}
           </h1>
-          <p className="text-xs text-mute">
+          <p className="mt-0.5 text-xs text-mute">
             {catLabel(app.category)} · {links.length} version
             {links.length !== 1 ? 's' : ''} available
           </p>
+          {updatedOn && (
+            <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-lg border border-line/60 bg-panel2 px-2 py-1 text-[11px] font-semibold text-mute">
+              <CalendarDays className="h-3.5 w-3.5 text-accent2" />
+              <span>
+                Updated{' '}
+                <span className="font-bold text-fg">{updatedOn}</span>
+              </span>
+            </p>
+          )}
         </div>
       </div>
 
@@ -117,32 +145,55 @@ export default function DownloadPage() {
 
       {links.length ? (
         <div className="space-y-3">
-          {links.map((l, i) => (
-            <button
-              key={l.url}
-              onClick={() => go(l)}
-              className="group flex w-full items-center gap-3 rounded-2xl border border-line/70 bg-panel p-4 text-left transition hover:border-accent/50 hover:bg-panel2"
-            >
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent2/15 font-display text-sm font-extrabold text-accent2 ring-1 ring-accent2/25">
-                {i + 1}
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-bold text-fg">
-                  {l.name}
-                </div>
-                <div className="flex items-center gap-1 text-[11px] text-mute">
-                  <ShieldCheck className="h-3 w-3 text-accent" />
-                  Verified & Safe
-                </div>
-              </div>
-              <span className="flex shrink-0 items-center gap-1.5 rounded-xl bg-accent px-3 py-2.5 text-xs font-extrabold text-ink transition group-hover:brightness-110 sm:px-4">
-                <Download className="h-3.5 w-3.5" />
-                <span className="hidden min-[360px]:inline">
-                  {busy === l.url ? 'Opening…' : 'Get'}
+          {links.map((l, i) => {
+            const isLatest = i === 0;
+            const ago =
+              isLatest
+                ? (() => {
+                    const ts = getLinkUpdatedAt(l, app);
+                    return ts ? formatRelativeDate(ts) : '';
+                  })()
+                : '';
+            return (
+              <button
+                key={l.url}
+                onClick={() => handleDownload(l)}
+                className="group flex w-full items-center gap-3 rounded-2xl border border-line/70 bg-panel p-4 text-left transition hover:border-accent/50 hover:bg-panel2"
+              >
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent2/15 font-display text-sm font-extrabold text-accent2 ring-1 ring-accent2/25">
+                  {i + 1}
                 </span>
-              </span>
-            </button>
-          ))}
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-bold text-fg">
+                    {l.name}
+                    {isLatest && (
+                      <span className="ml-2 rounded-md bg-accent/15 px-1.5 py-0.5 text-[9px] font-extrabold uppercase text-accent">
+                        Latest
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-mute">
+                    <span className="inline-flex items-center gap-1">
+                      <ShieldCheck className="h-3 w-3 text-accent" />
+                      Direct download
+                    </span>
+                    {ago && (
+                      <span className="inline-flex items-center gap-1">
+                        <Clock3 className="h-3 w-3 text-accent2" />
+                        Updated {ago}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <span className="flex shrink-0 items-center gap-1.5 rounded-xl bg-accent px-3 py-2.5 text-xs font-extrabold text-ink transition group-hover:brightness-110 sm:px-4">
+                  <Download className="h-3.5 w-3.5" />
+                  <span className="hidden min-[360px]:inline">
+                    {busy === l.url ? 'Opening…' : 'Get'}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
         </div>
       ) : (
         <div className="rounded-2xl border border-line/70 bg-panel p-8 text-center text-sm text-mute">
