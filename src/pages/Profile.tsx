@@ -11,13 +11,13 @@ import {
   requestNotificationPermission,
   type NotifItem,
 } from '../lib/notifications';
-import { fetchAdminNotices, type AdminNotice } from '../lib/firebase';
+import { fetchAdminNotices } from '../lib/firebase';
+import type { AdminNotice } from '../lib/types';
 import { fallbackLogo } from '../lib/util';
 import ThemeToggle from '../components/ThemeToggle';
 import {
   User,
   Lock,
-  ShieldCheck,
   Mail,
   MessageCircle,
   Send,
@@ -220,8 +220,8 @@ export default function Profile() {
             {adminNotices.map((n) => (
               <div key={n.id} className="rounded-xl bg-panel2 px-3 py-2.5">
                 <p className="text-sm font-bold text-fg">{n.title}</p>
-                {n.body && (
-                  <p className="mt-1 text-xs text-mute">{n.body}</p>
+                {n.message && (
+                  <p className="mt-1 text-xs text-mute">{n.message}</p>
                 )}
               </div>
             ))}
