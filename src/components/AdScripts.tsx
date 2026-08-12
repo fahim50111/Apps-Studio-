@@ -2,6 +2,20 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { X, ShieldAlert } from 'lucide-react';
 
+/**
+ * Adstera placements (SPA-safe equivalents of static HTML slots):
+ *
+ * 1) SocialBar  → inject into document.body (≈ above </body>)
+ *    Pages: Home, App Detail, Categories, Top List
+ *
+ * 2) PopHolder  → inject into document.head (≈ above </head>)
+ *    Pages: App Detail, Categories
+ *
+ * 3) Banner 300×250
+ *    - Modal every 5 clicks site-wide
+ *    - Inline on Top List under every 5th app
+ */
+
 const SOCIAL_SRC =
   'https://pl28865518.profitablecpmratenetwork.com/c3/2e/df/c32edf399a2465e679c6916a452916a5.js';
 const POPHOLDER_SRC =
@@ -10,10 +24,9 @@ const BANNER_SRC =
   'https://www.highperformanceformat.com/2f5bbf6218f8e38947d13ae964d09fd6/invoke.js';
 const BANNER_KEY = '2f5bbf6218f8e38947d13ae964d09fd6';
 
-const SOCIAL_PAGES = ['/', '/app', '/categories', '/toplist'];
-const POPHOLDER_PAGES = ['/app', '/categories'];
-
 const CLICK_COUNT_KEY = 'apps-studio-click-ad-count';
+const SOCIAL_MARKER = 'data-ad-socialbar';
+const POP_MARKER = 'data-ad-popholder';
 
 declare global {
   interface Window {
@@ -21,8 +34,22 @@ declare global {
   }
 }
 
-function pageMatches(pathname: string, pages: string[]) {
-  return pages.some((p) => pathname === p || (p !== '/' && pathname.startsWith(p)));
+function isSocialPage(pathname: string) {
+  if (pathname === '/') return true;
+  return (
+    pathname.startsWith('/app/') ||
+    pathname === '/app' ||
+    pathname.startsWith('/categories') ||
+    pathname.startsWith('/toplist')
+  );
+}
+
+function isPopholderPage(pathname: string) {
+  return (
+    pathname.startsWith('/app/') ||
+    pathname === '/app' ||
+    pathname.startsWith('/categories')
+  );
 }
 
 function todayKey(): string {
@@ -32,41 +59,67 @@ function todayKey(): string {
   ).padStart(2, '0')}`;
 }
 
-function injectScript(src: string, target: HTMLElement, prefix: string) {
+function removeMarkedScripts(marker: string) {
+  document
+    .querySelectorAll(`script[${marker}]`)
+    .forEach((n) => n.parentElement?.removeChild(n));
+}
+
+function injectScript(
+  src: string,
+  target: HTMLElement,
+  marker: string,
+  idPrefix: string
+) {
+  // One live instance per marker (avoid stacking on SPA navigations)
+  removeMarkedScripts(marker);
   const s = document.createElement('script');
-  s.id = `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  s.id = `${idPrefix}-${Date.now()}`;
   s.src = src;
-  s.async = false;
+  s.async = true;
   s.setAttribute('data-cfasync', 'false');
+  s.setAttribute(marker, '1');
   s.onerror = () => console.warn('Ad script failed to load:', src);
   target.appendChild(s);
   return s;
 }
 
-function runPopHolder() {
-  injectScript(POPHOLDER_SRC, document.head, 'ad-popholder-route');
-}
-
 function runSocialBar() {
-  injectScript(SOCIAL_SRC, document.body, 'ad-socialbar-route');
+  // SocialBar must sit under body (Adstera: above </body>)
+  injectScript(SOCIAL_SRC, document.body, SOCIAL_MARKER, 'ad-socialbar');
 }
 
+function runPopHolder() {
+  // PopHolder must sit in head (Adstera: above </head>)
+  injectScript(POPHOLDER_SRC, document.head, POP_MARKER, 'ad-popholder');
+}
+
+/** Route-aware SocialBar + PopHolder loaders */
 export function AdRouteScripts() {
   const { pathname } = useLocation();
-  const social = pageMatches(pathname, SOCIAL_PAGES);
-  const popholder = pageMatches(pathname, POPHOLDER_PAGES);
+  const social = isSocialPage(pathname);
+  const popholder = isPopholderPage(pathname);
 
+  // SocialBar — only Home / App Detail / Categories / Top List
   useEffect(() => {
-    if (!social) return;
-    const t = window.setTimeout(runSocialBar, 500);
+    if (!social) {
+      removeMarkedScripts(SOCIAL_MARKER);
+      return;
+    }
+    const t = window.setTimeout(runSocialBar, 400);
     return () => window.clearTimeout(t);
   }, [social, pathname]);
 
+  // PopHolder — only App Detail / Categories
   useEffect(() => {
-    if (!popholder) return;
+    if (!popholder) {
+      removeMarkedScripts(POP_MARKER);
+      return;
+    }
 
-    const immediate = window.setTimeout(runPopHolder, 450);
+    const immediate = window.setTimeout(runPopHolder, 350);
 
+    // Re-arm on first user click (common pattern for popunder networks)
     let firedOnClick = false;
     const onFirstClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement | null;
@@ -84,9 +137,12 @@ export function AdRouteScripts() {
     };
   }, [popholder, pathname]);
 
-  return <AdPageNotice social={social} popholder={popholder} banner={pathname === '/toplist'} />;
+  return (
+    <AdPageNotice social={social} popholder={popholder} banner={pathname.startsWith('/toplist')} />
+  );
 }
 
+/** Inline 300×250 banner (atOptions + invoke.js) */
 export function AdBanner({ compact = false }: { compact?: boolean }) {
   const ref = useRef<HTMLDivElement | null>(null);
 
@@ -124,36 +180,43 @@ export function AdBanner({ compact = false }: { compact?: boolean }) {
       className={`mx-auto flex w-full justify-center rounded-2xl border border-line bg-panel p-3 ${
         compact ? 'max-w-[332px]' : ''
       }`}
+      data-ad-banner
     >
       <div ref={ref} className="ad-inner min-h-[250px] overflow-hidden rounded-xl" />
     </div>
   );
 }
 
+/**
+ * Banner modal every 5 clicks — site-wide (all routes).
+ */
 export function ClickAdController() {
   const [show, setShow] = useState(false);
   const showRef = useRef(false);
-  const { pathname } = useLocation();
-  const enabled = pageMatches(pathname, SOCIAL_PAGES);
 
   useEffect(() => {
-    if (!enabled) return;
+    showRef.current = show;
+  }, [show]);
+
+  useEffect(() => {
     const handler = (e: MouseEvent) => {
       const target = e.target as HTMLElement | null;
+      // Ignore clicks on the ad overlay itself (close button etc.)
       if (showRef.current || target?.closest('[data-ad-overlay]')) return;
 
       const count = Number(localStorage.getItem(CLICK_COUNT_KEY) || '0') + 1;
       localStorage.setItem(CLICK_COUNT_KEY, String(count));
 
-      if (count % 5 === 0) {
+      if (count > 0 && count % 5 === 0) {
         setShow(true);
       }
     };
     document.addEventListener('click', handler, true);
     return () => document.removeEventListener('click', handler, true);
-  }, [enabled]);
+  }, []);
 
   if (!show) return null;
+
   return (
     <div
       data-ad-overlay
@@ -188,7 +251,7 @@ function AdPageNotice({
   const { pathname } = useLocation();
   const [visible, setVisible] = useState(false);
   const labels = useMemo(() => {
-    const l = [];
+    const l: string[] = [];
     if (social) l.push('SocialBar');
     if (popholder) l.push('PopHolder');
     if (banner) l.push('Banner');
@@ -216,7 +279,7 @@ function AdPageNotice({
   if (!visible || !labels.length) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-24 z-[65] px-4 pointer-events-none">
+    <div className="pointer-events-none fixed inset-x-0 bottom-24 z-[65] px-4">
       <div className="glass pointer-events-auto mx-auto flex max-w-sm items-start gap-2 rounded-2xl border border-line px-4 py-3 text-xs text-fg shadow-xl shadow-black/20">
         <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-accent3" />
         <p className="flex-1 leading-relaxed">
