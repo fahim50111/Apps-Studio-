@@ -1,54 +1,66 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import {
-  fetchAppById,
-  incrementDownload,
-  fetchTopByCategory,
-} from '../lib/firebase';
-import type { AppItem } from '../lib/firebase';
+import { fetchAppById, fetchTopByCategory } from '../lib/firebase';
+import type { AppItem } from '../lib/types';
+import { peekCache } from '../lib/cache';
 import {
   getName,
   catLabel,
   catColor,
-  fallbackLogo,
   formatCount,
   getDownloadLinks,
+  getScreenshots,
+  getVersionHistory,
+  formatRelativeDate,
 } from '../lib/util';
+import { trackAppView } from '../lib/history';
 import { updateSEO, resetSEO } from '../lib/seo';
-import { openExternal } from '../lib/security';
 import { AppCard } from '../components/AppCard';
+import AppImage from '../components/AppImage';
 import { CardSkeleton } from '../components/Skeletons';
 import TopProgress from '../components/TopProgress';
 import {
   ArrowLeft,
   Download,
   Share2,
-  Tag,
   HardDrive,
   ShieldCheck,
   Info,
   Layers,
-  CheckCircle2,
   Flame,
   ChevronRight,
+  History,
+  Images,
+  X,
+  CheckCircle2,
 } from 'lucide-react';
 
 export default function AppDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [app, setApp] = useState<AppItem | null>(null);
+  const cached = id ? peekCache<AppItem>(`app:${id}`) : undefined;
+  const [app, setApp] = useState<AppItem | null>(cached || null);
   const [related, setRelated] = useState<AppItem[]>([]);
   const [relatedLoading, setRelatedLoading] = useState(true);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!cached);
   const [notFound, setNotFound] = useState(false);
   const [toast, setToast] = useState('');
+  const [lightbox, setLightbox] = useState<number | null>(null);
 
   useEffect(() => {
     if (!id) return;
     let alive = true;
-    setLoading(true);
+    const hit = peekCache<AppItem>(`app:${id}`);
+    if (hit) {
+      setApp(hit);
+      setLoading(false);
+    } else {
+      setLoading(true);
+      setApp(null);
+    }
     setRelated([]);
     setRelatedLoading(true);
+    setNotFound(false);
     window.scrollTo(0, 0);
 
     fetchAppById(id)
@@ -59,6 +71,7 @@ export default function AppDetail() {
           return;
         }
         setApp(a);
+        trackAppView(a);
         const name = getName(a);
         updateSEO({
           title: `${name} — Free Download | Apps Studio`,
@@ -101,24 +114,6 @@ export default function AppDetail() {
     setTimeout(() => setToast(''), 2200);
   };
 
-  const handleDownload = () => {
-    if (!app) return;
-    const links = getDownloadLinks(app);
-    if (links.length > 1) {
-      navigate(`/download/${app.id}`);
-      return;
-    }
-    if (links.length === 1) {
-      setApp((prev) =>
-        prev ? { ...prev, downloads: (prev.downloads || 0) + 1 } : prev
-      );
-      incrementDownload(app.id);
-      openExternal(links[0].url);
-      return;
-    }
-    showToast('Download link not available yet.');
-  };
-
   const handleShare = async () => {
     const url = window.location.href;
     if (navigator.share && app) {
@@ -136,6 +131,12 @@ export default function AppDetail() {
       showToast('Unable to copy link');
     }
   };
+
+  const screenshots = useMemo(
+    () => (app ? getScreenshots(app) : []),
+    [app]
+  );
+  const versions = useMemo(() => (app ? getVersionHistory(app) : []), [app]);
 
   if (loading) {
     return (
@@ -167,22 +168,22 @@ export default function AppDetail() {
 
   const name = getName(app);
   const color = catColor(app.category);
-  const logo = app.logo || fallbackLogo(name);
   const links = getDownloadLinks(app);
   const multi = links.length > 1;
+  const updated = formatRelativeDate(app.updatedAt || app.timestamp);
+  const hasDownloads = links.length > 0;
 
   return (
     <div className="pb-8">
       {/* hero cover */}
       <div className="relative h-60 w-full overflow-hidden md:h-72">
         {app.cover ? (
-          <img
+          <AppImage
             src={app.cover}
             alt={name}
+            priority
+            fallbackName={name}
             className="h-full w-full object-cover"
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
           />
         ) : (
           <div
@@ -197,30 +198,31 @@ export default function AppDetail() {
         <button
           onClick={() => navigate(-1)}
           className="glass absolute left-4 top-4 flex h-10 w-10 items-center justify-center rounded-xl border border-line/60 text-fg"
+          aria-label="Back"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
         <button
           onClick={handleShare}
           className="glass absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-xl border border-line/60 text-fg"
+          aria-label="Share"
         >
           <Share2 className="h-5 w-5" />
         </button>
 
         <div className="absolute inset-x-0 bottom-0 flex items-end gap-4 p-5">
-          <img
-            src={logo}
+          <AppImage
+            src={app.logo}
             alt={name}
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = fallbackLogo(name);
-            }}
+            priority
+            fallbackName={name}
             className="h-24 w-24 rounded-3xl object-cover shadow-2xl ring-2 ring-white/10"
           />
           <div className="min-w-0 flex-1 pb-1">
             <h1 className="font-display truncate text-2xl font-extrabold text-fg">
               {name}
             </h1>
-            <div className="mt-2 flex items-center gap-2 text-xs">
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
               <span
                 className="rounded-full px-2.5 py-1 font-bold uppercase tracking-wide"
                 style={{ background: color + '2a', color }}
@@ -232,38 +234,165 @@ export default function AppDetail() {
                   Mod
                 </span>
               )}
+              {app.versionName && (
+                <span className="rounded-full border border-line/70 bg-panel/80 px-2.5 py-1 font-semibold text-mute backdrop-blur">
+                  v{app.versionName.replace(/^v/i, '')}
+                </span>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* download button */}
       <div className="px-4 pt-4">
-        <button
-          onClick={handleDownload}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-accent py-4 text-sm font-extrabold text-ink shadow-lg shadow-accent/25 transition hover:brightness-110"
-        >
-          <Download className="h-5 w-5" />
-          {multi ? 'Choose Version & Download' : 'Download Free'}
-        </button>
+        {/* Primary CTA → download page only (never opens external links here) */}
+        {hasDownloads ? (
+          <Link
+            to={`/download/${app.id}`}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-accent py-4 text-sm font-extrabold text-ink shadow-lg shadow-accent/25 transition hover:brightness-110"
+          >
+            <Download className="h-5 w-5" />
+            {multi ? 'Choose Version & Download' : 'Download Free'}
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={() => showToast('Download link not available yet.')}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-accent py-4 text-sm font-extrabold text-ink opacity-60"
+          >
+            <Download className="h-5 w-5" />
+            Download Free
+          </button>
+        )}
+
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          {[
+            { icon: ShieldCheck, label: 'Verified link' },
+            { icon: Layers, label: 'Multi version' },
+            { icon: CheckCircle2, label: 'Free access' },
+          ].map(({ icon: Icon, label }) => (
+            <div
+              key={label}
+              className="flex flex-col items-center gap-1 rounded-xl border border-line/60 bg-panel px-2 py-2.5 text-center"
+            >
+              <Icon className="h-3.5 w-3.5 text-accent" />
+              <span className="text-[9px] font-bold uppercase tracking-wide text-mute">
+                {label}
+              </span>
+            </div>
+          ))}
+        </div>
 
         <div className="mt-4 grid grid-cols-3 gap-3">
-          <div className="rounded-2xl border border-line/70 bg-panel p-3 text-center">
-            <HardDrive className="mx-auto mb-1 h-4 w-4 text-mute" />
-            <p className="text-[10px] uppercase tracking-wider text-mute">Size</p>
-            <p className="text-sm font-bold text-fg">{app.size || '—'}</p>
-          </div>
-          <div className="rounded-2xl border border-line/70 bg-panel p-3 text-center">
-            <Flame className="mx-auto mb-1 h-4 w-4 text-accent3" />
-            <p className="text-[10px] uppercase tracking-wider text-mute">Downloads</p>
-            <p className="text-sm font-bold text-fg">{formatCount(app.downloads || 0)}</p>
-          </div>
-          <div className="rounded-2xl border border-line/70 bg-panel p-3 text-center">
-            <Layers className="mx-auto mb-1 h-4 w-4 text-accent2" />
-            <p className="text-[10px] uppercase tracking-wider text-mute">Versions</p>
-            <p className="text-sm font-bold text-fg">{links.length || 1}</p>
-          </div>
+          <Stat
+            icon={<HardDrive className="mx-auto mb-1 h-4 w-4 text-mute" />}
+            label="Size"
+            value={app.size || '—'}
+          />
+          <Stat
+            icon={<Flame className="mx-auto mb-1 h-4 w-4 text-accent3" />}
+            label="Downloads"
+            value={formatCount(app.downloads || 0)}
+          />
+          <Stat
+            icon={<Layers className="mx-auto mb-1 h-4 w-4 text-accent2" />}
+            label="Versions"
+            value={String(links.length || 1)}
+          />
         </div>
+
+        {updated && (
+          <p className="mt-3 flex items-center gap-1.5 px-1 text-[11px] font-semibold text-mute">
+            <History className="h-3.5 w-3.5" />
+            Updated {updated}
+          </p>
+        )}
+
+        {screenshots.length > 0 && (
+          <section className="mt-6">
+            <h2 className="font-display mb-3 flex items-center gap-2 text-sm font-bold text-fg">
+              <Images className="h-4 w-4 text-accent2" />
+              Screenshots
+            </h2>
+            <div className="no-scrollbar -mx-1 flex gap-3 overflow-x-auto px-1 pb-1">
+              {screenshots.map((src, i) => (
+                <button
+                  key={`${src}-${i}`}
+                  onClick={() => setLightbox(i)}
+                  className="shrink-0 overflow-hidden rounded-2xl border border-line/70 bg-panel2 shadow-sm transition hover:border-accent/40"
+                >
+                  <AppImage
+                    src={src}
+                    alt={`${name} screenshot ${i + 1}`}
+                    fallbackName={name}
+                    className="h-52 w-32 object-cover sm:h-60 sm:w-36"
+                  />
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Available versions — display only, no direct download links */}
+        {versions.length > 0 && (
+          <section className="mt-6 rounded-2xl border border-line/70 bg-panel p-4">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <h2 className="font-display flex items-center gap-2 text-sm font-bold text-fg">
+                <History className="h-4 w-4 text-accent" />
+                Available versions
+              </h2>
+              {hasDownloads && (
+                <Link
+                  to={`/download/${app.id}`}
+                  className="text-[11px] font-bold text-accent"
+                >
+                  Download page
+                </Link>
+              )}
+            </div>
+            <ul className="divide-y divide-line/60">
+              {versions.map((v, i) => (
+                <li
+                  key={`${v.name}-${i}`}
+                  className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
+                >
+                  <span
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-extrabold ${
+                      v.isLatest
+                        ? 'bg-accent text-ink'
+                        : 'bg-panel2 text-mute ring-1 ring-line'
+                    }`}
+                  >
+                    {i + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-fg">
+                      {v.name}
+                      {v.isLatest && (
+                        <span className="ml-2 rounded-md bg-accent/15 px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-accent">
+                          Latest
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-[11px] text-mute">
+                      {[v.size, v.updatedLabel].filter(Boolean).join(' · ') ||
+                        'Available on download page'}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            {hasDownloads && (
+              <Link
+                to={`/download/${app.id}`}
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-accent/30 bg-accent/10 py-3 text-xs font-extrabold text-accent transition hover:bg-accent hover:text-ink"
+              >
+                <Download className="h-3.5 w-3.5" />
+                Go to download page
+              </Link>
+            )}
+          </section>
+        )}
 
         {app.description && (
           <div className="mt-5 rounded-2xl border border-line/70 bg-panel p-5">
@@ -276,14 +405,8 @@ export default function AppDetail() {
             </p>
           </div>
         )}
-
-        <div className="mt-4 flex items-center gap-2 rounded-xl bg-accent/10 px-4 py-3 text-xs font-semibold text-accent">
-          <ShieldCheck className="h-4 w-4" />
-          Verified download · Safe & free
-        </div>
       </div>
 
-      {/* related */}
       {(relatedLoading || related.length > 0) && (
         <section className="mt-8 px-4">
           <div className="mb-3 flex items-center justify-between">
@@ -313,11 +436,52 @@ export default function AppDetail() {
         </section>
       )}
 
+      {lightbox !== null && screenshots[lightbox] && (
+        <div
+          className="fixed inset-0 z-[85] flex items-center justify-center bg-black/85 p-4"
+          onClick={() => setLightbox(null)}
+        >
+          <button
+            className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-white"
+            onClick={() => setLightbox(null)}
+            aria-label="Close"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          <AppImage
+            src={screenshots[lightbox]}
+            alt={`${name} screenshot`}
+            priority
+            fallbackName={name}
+            className="max-h-[85vh] max-w-full rounded-2xl object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+
       {toast && (
         <div className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-full bg-panel px-5 py-2.5 text-xs font-bold text-fg shadow-xl ring-1 ring-line">
           {toast}
         </div>
       )}
+    </div>
+  );
+}
+
+function Stat({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-line/70 bg-panel p-3 text-center">
+      {icon}
+      <p className="text-[10px] uppercase tracking-wider text-mute">{label}</p>
+      <p className="text-sm font-bold text-fg">{value}</p>
     </div>
   );
 }
