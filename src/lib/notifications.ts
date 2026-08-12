@@ -1,14 +1,11 @@
-import { collection, getDocs, query, limit } from 'firebase/firestore';
-import { db, type AppItem } from './firebase';
-import { safeUrl, sanitizeText } from './security';
+import { fetchNewestApps, type AppItem } from './firebase';
+import { sanitizeText } from './security';
 
 // ============================================================
 // New-app notifications.
 // Strategy: track the newest app id (Firestore push ids are time-sortable) the
 // user has already "seen" in localStorage. On each load we fetch the newest
 // apps and anything newer than the stored marker is a fresh notification.
-// If the user granted the browser Notification permission, we also fire a
-// native notification for the newest one.
 // ============================================================
 
 const SEEN_KEY = 'apps-studio-seen-newest';
@@ -22,12 +19,6 @@ export interface NotifItem {
   at: number;
 }
 
-function num(v: unknown): number {
-  const n = Number(v);
-  return Number.isNaN(n) ? 0 : n;
-}
-
-// Firestore push ids sort chronologically as strings.
 function newestId(apps: AppItem[]): string | null {
   if (!apps.length) return null;
   return apps.reduce((max, a) => (a.id > max ? a.id : max), apps[0].id);
@@ -68,36 +59,13 @@ function storeNotifs(items: NotifItem[]) {
   }
 }
 
-/**
- * Fetch newest apps and diff against the stored marker.
- * Returns the full, updated notification list (newest first).
- * `firstRun` is true when the user has no marker yet — in that case we DON'T
- * spam them with "new" notifications for the whole catalog; we just set the
- * baseline.
- */
 export async function checkForNewApps(): Promise<{
   notifs: NotifItem[];
   freshCount: number;
 }> {
   let apps: AppItem[] = [];
-  // Index-free: fetch a bounded set and sort by push id (time-ordered) client
-  // side. Push ids sort chronologically, so this reliably finds newest apps.
   try {
-    const snap = await getDocs(query(collection(db, 'apps'), limit(60)));
-    apps = snap.docs
-      .map((d) => {
-        const data = d.data();
-        return {
-          id: d.id,
-          name:
-            (data.displayName as string) || (data.name as string) || 'New app',
-          logo: safeUrl(data.logo as string) || '',
-          category: (data.category as string) || 'tools',
-          downloads: num(data.downloads),
-        } as AppItem;
-      })
-      .sort((a, b) => (a.id < b.id ? 1 : -1))
-      .slice(0, 15);
+    apps = (await fetchNewestApps(60)).slice(0, 15);
   } catch {
     return { notifs: getStoredNotifs(), freshCount: 0 };
   }
@@ -105,13 +73,11 @@ export async function checkForNewApps(): Promise<{
   const marker = getSeen();
   const top = newestId(apps);
 
-  // first ever visit: set baseline, no notifications
   if (!marker) {
     if (top) setSeen(top);
     return { notifs: getStoredNotifs(), freshCount: 0 };
   }
 
-  // anything with id > marker is new
   const fresh = apps.filter((a) => a.id > marker);
   const existing = getStoredNotifs();
 
@@ -129,17 +95,13 @@ export async function checkForNewApps(): Promise<{
       ...existing,
     ].slice(0, 30);
     storeNotifs(merged);
-
-    // fire a native notification for the newest, if allowed
     maybeNativeNotify(freshNotifs[0], fresh.length);
-
     return { notifs: merged, freshCount: fresh.length };
   }
 
   return { notifs: existing, freshCount: 0 };
 }
 
-/** Mark everything as read (updates the marker to the newest known id). */
 export function markAllSeen(notifs: NotifItem[]) {
   if (notifs.length) {
     const newest = notifs.reduce(
@@ -158,7 +120,6 @@ export function clearNotifs() {
   }
 }
 
-// ---- native browser notifications (opt-in) ----
 export function notificationsSupported(): boolean {
   return typeof window !== 'undefined' && 'Notification' in window;
 }
