@@ -56,6 +56,92 @@
   color-scheme: dark;
 }
 
+/* Dark mode monthly accent tints */
+.theme-dark.theme-month-1 {
+  --c-accent: #7dd3fc;
+  --c-accent2: #818cf8;
+  --c-accent3: #22d3ee;
+  --glow-1: rgba(125, 211, 252, 0.13);
+  --glow-2: rgba(129, 140, 248, 0.1);
+}
+.theme-dark.theme-month-2 {
+  --c-accent: #fb7185;
+  --c-accent2: #c084fc;
+  --c-accent3: #f472b6;
+  --glow-1: rgba(251, 113, 133, 0.13);
+  --glow-2: rgba(192, 132, 252, 0.1);
+}
+.theme-dark.theme-month-3 {
+  --c-accent: #34d399;
+  --c-accent2: #2dd4bf;
+  --c-accent3: #a3e635;
+  --glow-1: rgba(52, 211, 153, 0.13);
+  --glow-2: rgba(45, 212, 191, 0.1);
+}
+.theme-dark.theme-month-4 {
+  --c-accent: #f9a8d4;
+  --c-accent2: #fb7185;
+  --c-accent3: #fbbf24;
+  --glow-1: rgba(249, 168, 212, 0.13);
+  --glow-2: rgba(251, 191, 36, 0.08);
+}
+.theme-dark.theme-month-5 {
+  --c-accent: #22c55e;
+  --c-accent2: #84cc16;
+  --c-accent3: #14b8a6;
+  --glow-1: rgba(34, 197, 94, 0.13);
+  --glow-2: rgba(132, 204, 22, 0.1);
+}
+.theme-dark.theme-month-6 {
+  --c-accent: #facc15;
+  --c-accent2: #fb923c;
+  --c-accent3: #f43f5e;
+  --glow-1: rgba(250, 204, 21, 0.14);
+  --glow-2: rgba(251, 146, 60, 0.1);
+}
+.theme-dark.theme-month-7 {
+  --c-accent: #06b6d4;
+  --c-accent2: #3b82f6;
+  --c-accent3: #2dd4bf;
+  --glow-1: rgba(6, 182, 212, 0.14);
+  --glow-2: rgba(59, 130, 246, 0.1);
+}
+.theme-dark.theme-month-8 {
+  --c-accent: #fb923c;
+  --c-accent2: #ef4444;
+  --c-accent3: #facc15;
+  --glow-1: rgba(251, 146, 60, 0.14);
+  --glow-2: rgba(239, 68, 68, 0.1);
+}
+.theme-dark.theme-month-9 {
+  --c-accent: #f59e0b;
+  --c-accent2: #8b5cf6;
+  --c-accent3: #eab308;
+  --glow-1: rgba(245, 158, 11, 0.14);
+  --glow-2: rgba(139, 92, 246, 0.1);
+}
+.theme-dark.theme-month-10 {
+  --c-accent: #f97316;
+  --c-accent2: #a855f7;
+  --c-accent3: #ef4444;
+  --glow-1: rgba(249, 115, 22, 0.14);
+  --glow-2: rgba(168, 85, 247, 0.1);
+}
+.theme-dark.theme-month-11 {
+  --c-accent: #a78bfa;
+  --c-accent2: #6366f1;
+  --c-accent3: #ec4899;
+  --glow-1: rgba(167, 139, 250, 0.14);
+  --glow-2: rgba(236, 72, 153, 0.1);
+}
+.theme-dark.theme-month-12 {
+  --c-accent: #38bdf8;
+  --c-accent2: #0ea5e9;
+  --c-accent3: #c084fc;
+  --glow-1: rgba(56, 189, 248, 0.14);
+  --glow-2: rgba(192, 132, 252, 0.09);
+}
+
 /* ---- Light theme: default is January if JS/month class has not applied yet ---- */
 .theme-light {
   --c-bg: #eef7ff;
@@ -92,6 +178,14 @@
   --c-on-accent: #ffffff;
   --glow-1: rgba(29, 155, 240, 0.14);
   --glow-2: rgba(0, 188, 212, 0.12);
+  --season-pattern: linear-gradient(
+    135deg,
+    rgba(29, 155, 240, 0.05) 25%,
+    transparent 25% 50%,
+    rgba(29, 155, 240, 0.05) 50% 75%,
+    transparent 75%
+  );
+  --season-size: 34px 34px;
 }
 .theme-light.theme-month-2 {
   /* February — Rose */
@@ -107,6 +201,12 @@
   --c-on-accent: #ffffff;
   --glow-1: rgba(233, 30, 99, 0.13);
   --glow-2: rgba(180, 76, 255, 0.1);
+  --season-pattern: radial-gradient(
+    circle at 20px 20px,
+    rgba(233, 30, 99, 0.08) 0 3px,
+    transparent 4px
+  );
+  --season-size: 40px 40px;
 }
 .theme-light.theme-month-3 {
   /* March — Mint */
@@ -122,6 +222,12 @@
   --c-on-accent: #ffffff;
   --glow-1: rgba(22, 163, 74, 0.13);
   --glow-2: rgba(45, 212, 191, 0.12);
+  --season-pattern: radial-gradient(
+    ellipse at 20px 10px,
+    rgba(22, 163, 74, 0.08) 0 8px,
+    transparent 9px
+  );
+  --season-size: 40px 40px;
 }
 .theme-light.theme-month-4 {
   /* April — Sakura */
@@ -137,6 +243,12 @@
   --c-on-accent: #ffffff;
   --glow-1: rgba(255, 92, 138, 0.14);
   --glow-2: rgba(245, 158, 11, 0.1);
+  --season-pattern: radial-gradient(
+    circle at 16px 16px,
+    rgba(255, 92, 138, 0.08) 0 5px,
+    transparent 6px
+  );
+  --season-size: 32px 32px;
 }
 .theme-light.theme-month-5 {
   /* May — Emerald */
@@ -152,6 +264,12 @@
   --c-on-accent: #ffffff;
   --glow-1: rgba(5, 150, 105, 0.13);
   --glow-2: rgba(132, 204, 22, 0.12);
+  --season-pattern: linear-gradient(
+    120deg,
+    rgba(5, 150, 105, 0.06) 0 2px,
+    transparent 2px 18px
+  );
+  --season-size: 18px 18px;
 }
 .theme-light.theme-month-6 {
   /* June — Sunshine */
@@ -167,6 +285,12 @@
   --c-on-accent: #1b1200;
   --glow-1: rgba(245, 158, 11, 0.18);
   --glow-2: rgba(251, 113, 133, 0.09);
+  --season-pattern: radial-gradient(
+    circle at 24px 24px,
+    rgba(245, 158, 11, 0.12) 0 7px,
+    transparent 8px
+  );
+  --season-size: 48px 48px;
 }
 .theme-light.theme-month-7 {
   /* July — Ocean */
@@ -182,6 +306,12 @@
   --c-on-accent: #ffffff;
   --glow-1: rgba(8, 145, 178, 0.15);
   --glow-2: rgba(37, 99, 235, 0.09);
+  --season-pattern: repeating-radial-gradient(
+    circle at 10px 20px,
+    rgba(8, 145, 178, 0.07) 0 2px,
+    transparent 3px 18px
+  );
+  --season-size: 36px 36px;
 }
 .theme-light.theme-month-8 {
   /* August — Mango */
@@ -197,6 +327,14 @@
   --c-on-accent: #ffffff;
   --glow-1: rgba(249, 115, 22, 0.16);
   --glow-2: rgba(239, 68, 68, 0.1);
+  --season-pattern: linear-gradient(
+    45deg,
+    rgba(249, 115, 22, 0.06) 25%,
+    transparent 25% 50%,
+    rgba(249, 115, 22, 0.06) 50% 75%,
+    transparent 75%
+  );
+  --season-size: 36px 36px;
 }
 .theme-light.theme-month-9 {
   /* September — Amber Study */
@@ -212,6 +350,12 @@
   --c-on-accent: #ffffff;
   --glow-1: rgba(217, 119, 6, 0.15);
   --glow-2: rgba(124, 58, 237, 0.08);
+  --season-pattern: linear-gradient(
+    90deg,
+    rgba(217, 119, 6, 0.06) 0 1px,
+    transparent 1px 18px
+  );
+  --season-size: 18px 18px;
 }
 .theme-light.theme-month-10 {
   /* October — Pumpkin */
@@ -227,6 +371,12 @@
   --c-on-accent: #ffffff;
   --glow-1: rgba(234, 88, 12, 0.17);
   --glow-2: rgba(147, 51, 234, 0.08);
+  --season-pattern: radial-gradient(
+    circle at 12px 12px,
+    rgba(234, 88, 12, 0.08) 0 4px,
+    transparent 5px
+  );
+  --season-size: 24px 24px;
 }
 .theme-light.theme-month-11 {
   /* November — Violet */
@@ -242,6 +392,12 @@
   --c-on-accent: #ffffff;
   --glow-1: rgba(124, 58, 237, 0.15);
   --glow-2: rgba(236, 72, 153, 0.09);
+  --season-pattern: linear-gradient(
+    135deg,
+    rgba(124, 58, 237, 0.06) 0 2px,
+    transparent 2px 16px
+  );
+  --season-size: 16px 16px;
 }
 .theme-light.theme-month-12 {
   /* December — Winter Night Bright */
@@ -257,6 +413,12 @@
   --c-on-accent: #ffffff;
   --glow-1: rgba(2, 132, 199, 0.14);
   --glow-2: rgba(168, 85, 247, 0.09);
+  --season-pattern: radial-gradient(
+    circle at 18px 18px,
+    rgba(2, 132, 199, 0.08) 0 3px,
+    transparent 4px
+  );
+  --season-size: 36px 36px;
 }
 
 html {
@@ -272,7 +434,7 @@ body {
   overflow-x: hidden;
 }
 
-/* radial ambient glow behind everything */
+/* radial ambient glow + seasonal pattern behind everything */
 body::before {
   content: '';
   position: fixed;
@@ -281,7 +443,9 @@ body::before {
   z-index: 0;
   background:
     radial-gradient(60% 40% at 15% 0%, var(--glow-1), transparent 70%),
-    radial-gradient(50% 35% at 90% 5%, var(--glow-2), transparent 70%);
+    radial-gradient(50% 35% at 90% 5%, var(--glow-2), transparent 70%),
+    var(--season-pattern, none);
+  background-size: auto, auto, var(--season-size, 36px 36px);
 }
 
 #root {
@@ -357,6 +521,85 @@ svg {
   animation: fadeIn 0.5s ease both;
 }
 
+@keyframes floatSoft {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+  50% {
+    transform: translateY(-6px) rotate(1deg);
+  }
+}
+@keyframes glowPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(200, 255, 0, 0);
+  }
+  50% {
+    box-shadow: 0 0 26px rgba(200, 255, 0, 0.28);
+  }
+}
+@keyframes cardPop {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes shineSweep {
+  0% {
+    transform: translateX(-120%) skewX(-18deg);
+  }
+  100% {
+    transform: translateX(220%) skewX(-18deg);
+  }
+}
+
+.logo-float {
+  animation: floatSoft 4s ease-in-out infinite;
+}
+.pulse-glow {
+  animation: glowPulse 3.2s ease-in-out infinite;
+}
+.card-pop {
+  animation: cardPop 0.45s ease both;
+}
+.shine-hover {
+  position: relative;
+  overflow: hidden;
+}
+.shine-hover::after {
+  content: '';
+  pointer-events: none;
+  position: absolute;
+  inset: -40% auto -40% 0;
+  width: 42%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.26),
+    transparent
+  );
+  transform: translateX(-120%) skewX(-18deg);
+}
+.shine-hover:hover::after {
+  animation: shineSweep 0.85s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo-float,
+  .pulse-glow,
+  .card-pop,
+  .marquee-track,
+  .topbar-pulse,
+  .infinite-loader span {
+    animation: none !important;
+  }
+}
+
 /* swiper pagination accent */
 .swiper-pagination-bullet {
   background: #ffffff !important;
@@ -382,6 +625,45 @@ svg {
 
 .mobile-nav-item {
   min-width: 0;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+button:active,
+a:active {
+  transform: scale(0.985);
+}
+
+.infinite-loader {
+  display: inline-flex;
+  gap: 5px;
+}
+.infinite-loader span {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--c-accent);
+  animation: loaderBounce 0.9s ease-in-out infinite;
+}
+.infinite-loader span:nth-child(2) {
+  animation-delay: 0.12s;
+}
+.infinite-loader span:nth-child(3) {
+  animation-delay: 0.24s;
+}
+@keyframes loaderBounce {
+  0%,
+  80%,
+  100% {
+    opacity: 0.45;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-7px);
+  }
 }
 
 .ad-inner {
