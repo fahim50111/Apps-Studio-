@@ -1,67 +1,65 @@
 # Apps Studio
 
-**Apps Studio** — Free premium apps, mod games & useful tools download platform.
+Free premium apps, mod games & tools download platform.
 
-Modern React + TypeScript + Vite + Tailwind CSS + Firebase website.
+**Stack:** React 19 · TypeScript · Vite · Tailwind CSS 4 · Firebase (Firestore + Hosting)
 
 ## Live
 
 - Firebase: https://apps-studio-1f1c0.web.app
-- (Also configured for Vercel)
+- Firebase alt: https://apps-studio-1f1c0.firebaseapp.com
 
-## Features
-
-- Browse apps by category (Social, Games, Tools, Entertainment, Education, Productivity)
-- Top charts / most downloaded
-- Search
-- App detail pages with multiple download links
-- Request new apps
-- Theme (Light / Dark / System) + monthly light themes
-- Notifications for new apps
-- Firebase Firestore catalog + secure rules
-- SEO ready (dynamic meta + sitemap)
-
-## Tech Stack
-
-- React 19 + TypeScript
-- Vite 7
-- Tailwind CSS 4
-- Firebase (Firestore + Hosting)
-- Framer Motion, Lucide icons, Swiper
-- React Router 7
-
-## Development
+## Develop
 
 ```bash
 npm install
 npm run dev
 ```
 
-## Build & Deploy (Firebase)
-
-```bash
-npm run firebase:deploy
-```
-
-Or:
+## Build
 
 ```bash
 npm run build
-firebase deploy --only hosting
+npm run preview
 ```
 
-Also deploy rules:
+## Deploy to Firebase
+
+Full guide: [`DEPLOY_FIREBASE.md`](./DEPLOY_FIREBASE.md)
 
 ```bash
-firebase deploy --only firestore:rules,firestore:indexes
+# one-time
+npm install
+npx firebase login
+
+# hosting
+npm run firebase:deploy
+
+# rules + indexes (after rule changes)
+npm run firebase:rules
+
+# everything
+npm run firebase:deploy:all
 ```
 
-## Project structure
+## Scripts
 
-- `src/pages/` — route pages
-- `src/components/` — UI components
-- `src/lib/` — Firebase, SEO, security, theme, utils
-- `public/` — static assets, robots, sitemap
+| Command | What it does |
+|---------|----------------|
+| `npm run build` | Typecheck + production build → `dist/` |
+| `npm run lint` | ESLint |
+| `npm run firebase:deploy` | Build + deploy Hosting |
+| `npm run firebase:rules` | Deploy Firestore rules & indexes |
+| `npm run firebase:deploy:all` | Build + deploy hosting + firestore |
+| `npm run firebase:serve` | Hosting emulator with production build |
+
+## Project layout
+
+- `src/pages/` — routes (lazy-loaded)
+- `src/components/` — UI
+- `src/lib/` — Firebase, SEO, theme, ads helpers
+- `public/` — static assets, robots, sitemap, logo
+- `firebase.json` — Hosting + Firestore config
 - `firestore.rules` — least-privilege security rules
 
 ## License

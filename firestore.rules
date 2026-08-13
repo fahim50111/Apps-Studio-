@@ -1,72 +1,82 @@
 rules_version = '2';
 
-// ============================================================
 // Apps Studio — Firestore Security Rules
-// Principle: least privilege. Public site can READ catalog data,
-// can ONLY increment a download counter, and can ONLY submit a
-// size-limited app request. Everything else is denied.
-// Admin writes should be done from a trusted/authenticated context
-// (Firebase console, Admin SDK, or an authenticated admin user).
-// ============================================================
+// Collections: apps, banners, news, requests, update_reports, visitors, admins
+//
+// Public website needs:
+//   - read: apps, banners, news, requests
+//   - update: apps.downloads +1 only
+//   - write: requests (submit + public board)
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ---- Helper: is this an admin? (optional, future-proof) ----
-    function isAdmin() {
-      return request.auth != null && request.auth.token.admin == true;
+    function isSignedIn() {
+      return request.auth != null;
     }
 
-    // -------------------- apps (catalog) --------------------
-    match /apps/{appId} {
-      // Anyone can read the catalog.
+    function onlyDownloadsBumped() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['downloads'])
+        && request.resource.data.downloads is number
+        && (
+          (resource.data.downloads is number
+            && request.resource.data.downloads == resource.data.downloads + 1)
+          || (!(resource.data.downloads is number)
+            && request.resource.data.downloads == 1)
+        );
+    }
+
+    // -------------------- apps --------------------
+    match /apps/{docId} {
       allow read: if true;
-
-      // Public clients may ONLY bump the download counter by exactly +1
-      // and may not touch any other field.
-      allow update: if isAdmin() || (
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['downloads']) &&
-        request.resource.data.downloads is int &&
-        (
-          (resource.data.downloads is int && request.resource.data.downloads == resource.data.downloads + 1) ||
-          (!(resource.data.downloads is int) && request.resource.data.downloads == 1)
-        )
-      );
-
-      // Creating / deleting apps is admin-only.
-      allow create, delete: if isAdmin();
+      allow create, delete: if isSignedIn();
+      // Auth = full update; public = downloads +1 only
+      allow update: if isSignedIn() || onlyDownloadsBumped();
     }
 
     // -------------------- banners --------------------
-    match /banners/{bannerId} {
+    match /banners/{docId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isSignedIn();
     }
 
-    // -------------------- admin_notifications --------------------
-    // Admin app can publish notices; public website can read them.
-    match /admin_notifications/{noticeId} {
+    // -------------------- news --------------------
+    match /news/{docId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isSignedIn();
     }
 
-    // -------------------- app_requests (user submissions) --------------------
-    match /app_requests/{reqId} {
-      // Requests are private: only admins can read/update/delete them.
-      allow read, update, delete: if isAdmin();
-
-      // Anyone may submit a request, but the payload is strictly validated
-      // to block junk / abuse / oversized writes.
-      allow create: if
-        request.resource.data.keys().hasOnly(['name', 'note', 'timestamp', 'createdAt']) &&
-        request.resource.data.name is string &&
-        request.resource.data.name.size() >= 1 &&
-        request.resource.data.name.size() <= 120 &&
-        request.resource.data.note is string &&
-        request.resource.data.note.size() <= 600;
+    // Legacy announcements (older builds)
+    match /admin_notifications/{docId} {
+      allow read: if true;
+      allow write: if isSignedIn();
     }
 
-    // -------------------- default deny --------------------
+    // -------------------- requests (public board) --------------------
+    // Fields: date(string), name(string), status(string), text(string), timestamp(number)
+    match /requests/{docId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // -------------------- update_reports --------------------
+    match /update_reports/{docId} {
+      allow read: if isSignedIn();
+      allow write: if true;
+    }
+
+    // -------------------- visitors --------------------
+    match /visitors/{docId} {
+      allow read: if isSignedIn();
+      allow write: if true;
+    }
+
+    // -------------------- admins --------------------
+    match /admins/{uid} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
