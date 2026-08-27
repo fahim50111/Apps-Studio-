@@ -1,0 +1,24 @@
+{
+  "name": "Apps Studio",
+  "short_name": "Apps Studio",
+  "description": "Download premium unlocked apps, mod games and useful tools. Fast, free, regularly updated.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#eef7ff",
+  "theme_color": "#1d9bf0",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

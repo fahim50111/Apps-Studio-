@@ -1,0 +1,85 @@
+rules_version = '2';
+
+// Apps Studio — Firestore Security Rules
+// Collections: apps, banners, news, requests, update_reports, visitors, admins
+//
+// Public website needs:
+//   - read: apps, banners, news, requests
+//   - update: apps.downloads +1 only
+//   - write: requests (submit + public board)
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function onlyDownloadsBumped() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['downloads'])
+        && request.resource.data.downloads is number
+        && (
+          (resource.data.downloads is number
+            && request.resource.data.downloads == resource.data.downloads + 1)
+          || (!(resource.data.downloads is number)
+            && request.resource.data.downloads == 1)
+        );
+    }
+
+    match /apps/{docId} {
+      allow read: if true;
+      allow create, delete: if isSignedIn();
+      allow update: if isSignedIn() || onlyDownloadsBumped();
+    }
+
+    match /banners/{docId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    match /news/{docId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    match /admin_notifications/{docId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    match /requests/{docId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasAll(['name', 'status', 'timestamp'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 120
+        && request.resource.data.status is string
+        && request.resource.data.status.size() <= 40
+        && request.resource.data.text is string
+        && request.resource.data.text.size() <= 600
+        && request.resource.data.date is string
+        && request.resource.data.date.size() <= 32
+        && request.resource.data.timestamp is number;
+      allow update, delete: if isSignedIn();
+    }
+
+    match /update_reports/{docId} {
+      allow read: if isSignedIn();
+      allow write: if true;
+    }
+
+    match /visitors/{docId} {
+      allow read: if isSignedIn();
+      allow write: if true;
+    }
+
+    match /admins/{uid} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
