@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
-import { fetchTopApps } from '../lib/firebase';
+import { useEffect } from 'react';
+import { fetchTopApps, appsFromCatalog } from '../lib/firebase';
 import type { AppItem } from '../lib/types';
 import { peekCache } from '../lib/cache';
+import { usePorter } from '../lib/viewporter';
 import { ListItem } from '../components/AppCard';
 import { ListSkeleton } from '../components/Skeletons';
 import TopProgress from '../components/TopProgress';
@@ -12,13 +13,17 @@ import { Flame } from 'lucide-react';
 const TOP_MAX = 50;
 
 export default function TopList() {
-  const [apps, setApps] = useState<AppItem[]>(
-    () =>
-      peekCache<AppItem[]>(`top:${TOP_MAX}`) ||
-      peekCache<AppItem[]>('top:24') ||
-      []
+  const { data: apps = [], loading } = usePorter<AppItem[]>(
+    `top:${TOP_MAX}`,
+    () => fetchTopApps(TOP_MAX),
+    {
+      eager: true,
+      seed: () =>
+        peekCache<AppItem[]>(`top:${TOP_MAX}`) ||
+        peekCache<AppItem[]>('top:24') ||
+        appsFromCatalog({ max: TOP_MAX }),
+    }
   );
-  const [loading, setLoading] = useState(apps.length === 0);
 
   useEffect(() => {
     updateSEO({
@@ -26,13 +31,6 @@ export default function TopList() {
       description:
         'The top 50 most downloaded premium apps and mod games on Apps Studio. Updated live, 100% free.',
     });
-    let alive = true;
-    fetchTopApps(TOP_MAX)
-      .then((a) => alive && setApps(a))
-      .finally(() => alive && setLoading(false));
-    return () => {
-      alive = false;
-    };
   }, []);
 
   return (
@@ -55,8 +53,7 @@ export default function TopList() {
         <div className="space-y-3">
           {apps.map((a, i) => (
             <div key={a.id}>
-              <ListItem app={a} rank={i} />
-              {/* Banner under every 5th app (5, 10, 15, …) */}
+              <ListItem app={a} rank={i} index={i} />
               {(i + 1) % 5 === 0 && (
                 <div className="my-3">
                   <AdBanner compact />

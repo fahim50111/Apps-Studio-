@@ -1,7 +1,6 @@
 export interface DownloadLink {
   name: string;
   url: string;
-  /** Per-link update/upload time when provided by admin. */
   updatedAt?: number;
   timestamp?: number;
 }
@@ -42,7 +41,6 @@ export interface AdminNotice {
   timestamp?: number;
 }
 
-/** Public app request board — collection `requests` */
 export interface AppRequest {
   id: string;
   date: string;
@@ -52,7 +50,6 @@ export interface AppRequest {
   timestamp: number;
 }
 
-/** Opaque pagination cursor — never import firestore types in UI code. */
 export type PageCursor = unknown;
 
 export interface Page {

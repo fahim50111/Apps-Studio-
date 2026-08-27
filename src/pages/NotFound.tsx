@@ -8,6 +8,7 @@ export default function NotFound() {
     updateSEO({
       title: 'Page Not Found — Apps Studio',
       description: 'The page you are looking for does not exist.',
+      robots: 'noindex, follow',
     });
   }, []);
 
@@ -16,7 +17,7 @@ export default function NotFound() {
       <div className="font-display text-7xl font-extrabold text-accent/30">404</div>
       <h1 className="font-display mt-2 text-xl font-bold text-fg">Page not found</h1>
       <p className="mt-2 max-w-sm text-sm text-mute">
-        The page you are looking for doesn\'t exist or has been moved.
+        The page you are looking for does not exist or has been moved.
       </p>
       <div className="mt-6 flex gap-3">
         <Link
