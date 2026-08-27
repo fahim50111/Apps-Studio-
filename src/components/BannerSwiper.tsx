@@ -37,7 +37,7 @@ export default function BannerSwiper({ banners }: { banners: Banner[] }) {
             {b.title && (
               <div className="absolute inset-x-0 bottom-0 p-5 text-white">
                 <h3 className="font-display text-lg font-bold">{b.title}</h3>
-                {b.desc && <p className="text-xs text-white/80">{b.desc}</p>
+                {b.desc && <p className="text-xs text-white/80">{b.desc}</p>}
               </div>
             )}
           </div>
