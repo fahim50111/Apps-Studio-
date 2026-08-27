@@ -4,6 +4,7 @@ import {
   fetchBanners,
   fetchTopApps,
   fetchTopByCategory,
+  appsFromCatalog,
 } from '../lib/firebase';
 import type { AppItem, Banner } from '../lib/types';
 import { CATEGORIES, catLabel } from '../lib/util';
@@ -13,8 +14,8 @@ import {
   type RecentApp,
 } from '../lib/history';
 import { peekCache } from '../lib/cache';
-import { useInView, scheduleIdle } from '../lib/viewporter';
-import { updateSEO } from '../lib/seo';
+import { usePorter } from '../lib/viewporter';
+import { updateSEO, websiteJsonLd } from '../lib/seo';
 import BannerSlider from '../components/BannerSlider';
 import CategoryMarquee from '../components/CategoryMarquee';
 import TopProgress from '../components/TopProgress';
@@ -62,8 +63,8 @@ function SectionHeader({
 function Grid({ apps }: { apps: AppItem[] }) {
   return (
     <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">
-      {apps.map((a) => (
-        <AppCard key={a.id} app={a} />
+      {apps.map((a, i) => (
+        <AppCard key={a.id} app={a} index={i} />
       ))}
     </div>
   );
@@ -72,31 +73,19 @@ function Grid({ apps }: { apps: AppItem[] }) {
 const TOP_POOL = 24;
 const CAT_PREVIEW = 6;
 
-/** Category row — loads only when scrolled into view (ViewPorter). */
 function CategoryRow({ cat }: { cat: string }) {
   const cacheKey = `cat-top:${cat}:${CAT_PREVIEW}:`;
-  const { ref, inView } = useInView({ rootMargin: '320px 0px' });
-  const [apps, setApps] = useState<AppItem[]>(
-    () => peekCache<AppItem[]>(cacheKey) || []
+  const { ref, data, loading, inView } = usePorter<AppItem[]>(
+    cacheKey,
+    () => fetchTopByCategory(cat, CAT_PREVIEW),
+    {
+      rootMargin: '280px 0px',
+      seed: () =>
+        peekCache<AppItem[]>(cacheKey) ||
+        appsFromCatalog({ category: cat, max: CAT_PREVIEW }),
+    }
   );
-  const [loading, setLoading] = useState(apps.length === 0);
-
-  useEffect(() => {
-    if (!inView) return;
-    let alive = true;
-    // Instant paint from cache already done; still SWR-refresh
-    setLoading(apps.length === 0);
-    fetchTopByCategory(cat, CAT_PREVIEW)
-      .then((items) => {
-        if (!alive) return;
-        setApps(items);
-      })
-      .finally(() => alive && setLoading(false));
-    return () => {
-      alive = false;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inView, cat]);
+  const apps = data || [];
 
   if (!inView && apps.length === 0) {
     return (
@@ -127,53 +116,34 @@ function CategoryRow({ cat }: { cat: string }) {
 }
 
 export default function Home() {
-  // Hydrate from ViewPorter cache for instant paint
-  const [banners, setBanners] = useState<Banner[]>(
-    () => peekCache<Banner[]>('banners') || []
-  );
-  const [topApps, setTopApps] = useState<AppItem[]>(
-    () => peekCache<AppItem[]>(`top:${TOP_POOL}`) || []
-  );
   const [recent, setRecent] = useState<RecentApp[]>(() => getRecentApps());
-  const [loading, setLoading] = useState(topApps.length === 0);
+
+  const { data: banners = [], loading: bannersLoading } = usePorter<Banner[]>(
+    'banners',
+    () => fetchBanners(),
+    { eager: true, seed: () => peekCache<Banner[]>('banners') || [] }
+  );
+
+  const { data: topApps = [], loading: topLoading } = usePorter<AppItem[]>(
+    `top:${TOP_POOL}`,
+    () => fetchTopApps(TOP_POOL),
+    {
+      eager: true,
+      seed: () =>
+        peekCache<AppItem[]>(`top:${TOP_POOL}`) || appsFromCatalog({ max: TOP_POOL }),
+    }
+  );
+
+  const loading = topLoading && topApps.length === 0;
 
   useEffect(() => {
     updateSEO({
-      jsonLd: {
-        '@context': 'https://schema.org',
-        '@type': 'WebSite',
-        name: 'Apps Studio',
-        url: window.location.origin,
-        potentialAction: {
-          '@type': 'SearchAction',
-          target: `${window.location.origin}/search?q={search_term_string}`,
-          'query-input': 'required name=search_term_string',
-        },
-      },
+      title: 'Apps Studio — Free Premium Apps & Mod Games Download',
+      description:
+        'Browse and download premium unlocked apps, mod games and useful tools. Updated daily, 100% free.',
+      type: 'website',
+      jsonLd: websiteJsonLd(),
     });
-
-    let alive = true;
-    // Critical path only — banners + top charts (one or two queries)
-    Promise.all([fetchBanners(), fetchTopApps(TOP_POOL)])
-      .then(([b, top]) => {
-        if (!alive) return;
-        setBanners(b);
-        setTopApps(top);
-      })
-      .finally(() => alive && setLoading(false));
-
-    // Warm category caches in idle time (doesn't block paint)
-    scheduleIdle(() => {
-      CATEGORIES.forEach((cat, i) => {
-        window.setTimeout(() => {
-          void fetchTopByCategory(cat, CAT_PREVIEW);
-        }, i * 120);
-      });
-    }, 2500);
-
-    return () => {
-      alive = false;
-    };
   }, []);
 
   const spotlight = topApps.slice(0, 3);
@@ -182,7 +152,7 @@ export default function Home() {
   return (
     <div className="pb-6">
       <TopProgress active={loading && topApps.length === 0} />
-      <BannerSlider banners={banners} loading={loading && !banners.length} />
+      <BannerSlider banners={banners} loading={bannersLoading && !banners.length} />
 
       <div className="mt-4">
         <CategoryMarquee />
@@ -196,7 +166,7 @@ export default function Home() {
       ) : (
         <div className="mt-4 space-y-8 px-4">
           {spotlight.length > 0 && (
-            <section>
+            <section className="anim-fade">
               <SectionHeader
                 title="Spotlight"
                 to="/toplist"
@@ -204,14 +174,14 @@ export default function Home() {
               />
               <div className="space-y-3">
                 {spotlight.map((a, i) => (
-                  <ListItem key={a.id} app={a} rank={i} />
+                  <ListItem key={a.id} app={a} rank={i} index={i} />
                 ))}
               </div>
             </section>
           )}
 
           {mostPopular.length > 0 && (
-            <section>
+            <section className="anim-fade" style={{ animationDelay: '80ms' }}>
               <SectionHeader
                 title="Most Popular"
                 to="/toplist"
@@ -221,7 +191,6 @@ export default function Home() {
             </section>
           )}
 
-          {/* ViewPorter: each category fires Firestore only when near viewport */}
           {CATEGORIES.map((cat) => (
             <CategoryRow key={cat} cat={cat} />
           ))}
@@ -245,11 +214,7 @@ export default function Home() {
               />
               <div className="no-scrollbar -mx-1 flex gap-3 overflow-x-auto px-1 pb-1">
                 {recent.map((r) => (
-                  <Link
-                    key={r.id}
-                    to={`/app/${r.id}`}
-                    className="w-[88px] shrink-0"
-                  >
+                  <Link key={r.id} to={`/app/${r.id}`} className="card-lift w-[88px] shrink-0">
                     <AppImage
                       src={r.logo}
                       alt={r.name}
