@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { fetchAppsPage } from '../lib/firebase';
+import { fetchAppsPage, appsFromCatalog } from '../lib/firebase';
 import type { AppItem, PageCursor } from '../lib/types';
+import { peekCache } from '../lib/cache';
+import { useInView } from '../lib/viewporter';
 import { CATEGORIES, CATEGORY_META, catLabel } from '../lib/util';
 import { AppCard } from '../components/AppCard';
 import { RowSkeleton, CardSkeleton } from '../components/Skeletons';
@@ -30,18 +32,31 @@ const ICON_MAP: Record<string, LucideIcon> = {
 };
 
 export default function Categories() {
-  // page size adapts to the screen: enough rows to fill the viewport + spare
-  const { pageSize, cols } = useResponsivePageSize(5);
+  const { pageSize, cols } = useResponsivePageSize(3);
 
-  const [apps, setApps] = useState<AppItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [apps, setApps] = useState<AppItem[]>(() => {
+    const cat = new URLSearchParams(window.location.search).get('cat') || 'all';
+    const fromPorter = appsFromCatalog({
+      category: cat === 'all' ? undefined : cat,
+      max: 50,
+    });
+    if (fromPorter.length) return fromPorter;
+    const pool =
+      peekCache<AppItem[]>('top:50') || peekCache<AppItem[]>('top:24') || [];
+    if (!pool.length) return [];
+    return cat === 'all' ? pool : pool.filter((a) => a.category === cat);
+  });
+  const [loading, setLoading] = useState(() => apps.length === 0);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
 
   const cursorRef = useRef<PageCursor | null>(null);
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
   const loadingMoreRef = useRef(false);
   const hasMoreRef = useRef(false);
+  const { ref: sentinelRef, inView: sentinelInView } = useInView({
+    rootMargin: '280px 0px',
+    once: false,
+  });
 
   const [params, setParams] = useSearchParams();
   const active = params.get('cat') || 'all';
@@ -57,24 +72,26 @@ export default function Categories() {
     });
   }, [active]);
 
-  const loadFirst = useCallback(
-    (cat: string, size: number) => {
+  const loadFirst = useCallback((cat: string, size: number) => {
+    const category = cat === 'all' ? undefined : cat;
+    const seed = appsFromCatalog({ category, max: 50 });
+    if (seed.length) {
+      setApps(seed);
+      setLoading(false);
+    } else {
       setLoading(true);
-      cursorRef.current = null;
-      const category = cat === 'all' ? undefined : cat;
-      fetchAppsPage(size, null, category)
-        .then((page) => {
-          setApps(page.items);
-          cursorRef.current = page.cursor;
-          setHasMore(page.hasMore);
-          hasMoreRef.current = page.hasMore;
-        })
-        .finally(() => setLoading(false));
-    },
-    []
-  );
+    }
+    cursorRef.current = null;
+    fetchAppsPage(size, null, category)
+      .then((page) => {
+        setApps(page.items);
+        cursorRef.current = page.cursor;
+        setHasMore(page.hasMore);
+        hasMoreRef.current = page.hasMore;
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
-  // reload when the category changes
   useEffect(() => {
     loadFirst(active, pageSize);
   }, [active, pageSize, loadFirst]);
@@ -97,19 +114,9 @@ export default function Categories() {
       });
   }, [active, pageSize]);
 
-  // IntersectionObserver for infinite scroll
   useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) loadMore();
-      },
-      { rootMargin: '200px' }
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [loadMore, apps.length, hasMore]);
+    if (sentinelInView) loadMore();
+  }, [sentinelInView, loadMore]);
 
   const setCat = (cat: string) => {
     if (cat === 'all') setParams({});
@@ -119,15 +126,9 @@ export default function Categories() {
   return (
     <div className="pb-6">
       <TopProgress active={loading} />
-
-      {/* category chips */}
       <div className="sticky top-0 z-20 border-b border-line/60 bg-bg/90 px-4 py-3 backdrop-blur-md">
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-          <Chip
-            label="All"
-            activeState={active === 'all'}
-            onClick={() => setCat('all')}
-          />
+        <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
+          <Chip label="All" activeState={active === 'all'} onClick={() => setCat('all')} />
           {CATEGORIES.map((c) => {
             const meta = CATEGORY_META[c];
             return (
@@ -151,17 +152,15 @@ export default function Categories() {
       ) : apps.length ? (
         <>
           <div className="grid grid-cols-3 gap-3 px-4 sm:grid-cols-4 md:grid-cols-6">
-            {apps.map((a) => (
-              <AppCard key={a.id} app={a} />
+            {apps.map((a, i) => (
+              <AppCard key={a.id} app={a} index={i % 12} />
             ))}
             {loadingMore &&
               Array.from({ length: cols }).map((_, i) => (
                 <CardSkeleton key={`s-${i}`} />
               ))}
           </div>
-
           {hasMore && <div ref={sentinelRef} className="h-1 w-full" />}
-
           {hasMore ? (
             <div className="mt-6 flex justify-center px-4">
               <button
@@ -180,9 +179,7 @@ export default function Categories() {
               </button>
             </div>
           ) : (
-            <p className="mt-6 text-center text-xs text-mute">
-              You've reached the end
-            </p>
+            <p className="mt-6 text-center text-xs text-mute">You've reached the end</p>
           )}
         </>
       ) : (
