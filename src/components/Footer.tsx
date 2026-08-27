@@ -13,7 +13,6 @@ export default function Footer() {
     <footer className="mt-10 border-t border-line/60 bg-panel/65">
       <div className="mx-auto max-w-5xl px-4 py-7">
         <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-start">
-          {/* Brand */}
           <div>
             <Link to="/" className="flex items-center gap-2.5">
               <LogoMark className="h-9 w-9 shrink-0" />
@@ -31,7 +30,6 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Links + contact */}
           <div className="grid grid-cols-2 gap-6 sm:grid-cols-[160px_190px]">
             <div>
               <h4 className="font-display mb-3 text-xs font-bold uppercase tracking-wider text-fg">
