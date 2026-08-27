@@ -1,22 +1,12 @@
-/**
- * ViewPorter-style multi-layer cache
- * ----------------------------------
- * 1) Memory (instant, same session)
- * 2) localStorage (survives reloads, TTL)
- * 3) In-flight promise dedupe (one network call for N waiters)
- * 4) Stale-while-revalidate (serve stale → refresh in background)
- *
- * Cuts Firestore reads when users navigate Home ↔ Detail ↔ Top repeatedly.
- */
-
 type Entry<T> = {
   v: T;
-  exp: number; // hard expiry
-  stale: number; // soft stale time (SWR)
+  exp: number;
+  stale: number;
 };
 
 const mem = new Map<string, Entry<unknown>>();
 const inflight = new Map<string, Promise<unknown>>();
+const revalidatedThisSession = new Set<string>();
 
 const PREFIX = 'vp-cache:';
 
@@ -38,7 +28,6 @@ function lsSet<T>(key: string, entry: Entry<T>) {
   try {
     localStorage.setItem(PREFIX + key, JSON.stringify(entry));
   } catch {
-    // quota full — drop oldest-ish keys
     try {
       const keys: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
@@ -56,23 +45,12 @@ function lsSet<T>(key: string, entry: Entry<T>) {
 }
 
 export type CacheOpts = {
-  /** Fresh window (ms). Default 2 min. */
   ttl?: number;
-  /** After ttl, still serve stale until this (ms). Default 30 min. */
   staleTtl?: number;
-  /** Skip reading localStorage (memory only). */
   memoryOnly?: boolean;
-  /** Force network even if fresh. */
   force?: boolean;
 };
 
-/**
- * Cached fetcher with SWR.
- * - Fresh hit → return immediately (no network)
- * - Stale hit → return immediately + revalidate in background
- * - Miss → network, then cache
- * - Concurrent callers share one in-flight promise
- */
 export async function cachedFetch<T>(
   key: string,
   loader: () => Promise<T>,
@@ -94,14 +72,19 @@ export async function cachedFetch<T>(
         mem.set(key, disk);
         return disk.v;
       }
-      // Stale-while-revalidate
       if (disk && disk.stale > t) {
         mem.set(key, disk);
-        void revalidate(key, loader, ttl, staleTtl, opts.memoryOnly);
+        if (!revalidatedThisSession.has(key)) {
+          revalidatedThisSession.add(key);
+          void revalidate(key, loader, ttl, staleTtl, opts.memoryOnly);
+        }
         return disk.v;
       }
     } else if (memHit && memHit.stale > t) {
-      void revalidate(key, loader, ttl, staleTtl, true);
+      if (!revalidatedThisSession.has(key)) {
+        revalidatedThisSession.add(key);
+        void revalidate(key, loader, ttl, staleTtl, true);
+      }
       return memHit.v;
     }
   }
@@ -135,7 +118,6 @@ function revalidate<T>(
   return p;
 }
 
-/** Read cache only (no network). Fresh or stale. */
 export function peekCache<T>(key: string): T | undefined {
   const t = now();
   const m = mem.get(key) as Entry<T> | undefined;
@@ -148,7 +130,6 @@ export function peekCache<T>(key: string): T | undefined {
   return undefined;
 }
 
-/** Write into cache manually (e.g. after detail fetch seed list). */
 export function seedCache<T>(
   key: string,
   value: T,
@@ -192,14 +173,39 @@ export function invalidateCache(prefixOrKey?: string) {
   }
 }
 
-/** TTL presets used across the app */
 export const TTL = {
-  banners: { ttl: 5 * 60_000, staleTtl: 60 * 60_000 },
-  top: { ttl: 2 * 60_000, staleTtl: 20 * 60_000 },
-  category: { ttl: 3 * 60_000, staleTtl: 30 * 60_000 },
-  app: { ttl: 3 * 60_000, staleTtl: 30 * 60_000 },
-  search: { ttl: 90_000, staleTtl: 10 * 60_000 },
-  requests: { ttl: 45_000, staleTtl: 5 * 60_000 },
-  notices: { ttl: 3 * 60_000, staleTtl: 30 * 60_000 },
-  page: { ttl: 90_000, staleTtl: 15 * 60_000 },
+  banners: { ttl: 15 * 60_000, staleTtl: 6 * 60 * 60_000 },
+  top: { ttl: 10 * 60_000, staleTtl: 3 * 60 * 60_000 },
+  category: { ttl: 10 * 60_000, staleTtl: 3 * 60 * 60_000 },
+  app: { ttl: 15 * 60_000, staleTtl: 4 * 60 * 60_000 },
+  search: { ttl: 10 * 60_000, staleTtl: 2 * 60 * 60_000 },
+  requests: { ttl: 2 * 60_000, staleTtl: 20 * 60_000 },
+  notices: { ttl: 10 * 60_000, staleTtl: 2 * 60 * 60_000 },
+  page: { ttl: 8 * 60_000, staleTtl: 2 * 60 * 60_000 },
 } as const;
+
+export function collectCachedByPrefix<T>(prefix: string): T[] {
+  const out: T[] = [];
+  const seen = new Set<string>();
+  const push = (key: string, v: unknown) => {
+    if (seen.has(key) || v == null) return;
+    seen.add(key);
+    out.push(v as T);
+  };
+  for (const [k, e] of mem) {
+    if (k.startsWith(prefix)) push(k, e.v);
+  }
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const rawKey = localStorage.key(i);
+      if (!rawKey?.startsWith(PREFIX + prefix)) continue;
+      const key = rawKey.slice(PREFIX.length);
+      if (seen.has(key)) continue;
+      const disk = lsGet<T>(key);
+      if (disk) push(key, disk.v);
+    }
+  } catch {
+    /* ignore */
+  }
+  return out;
+}
