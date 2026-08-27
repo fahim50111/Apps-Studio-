@@ -1,17 +1,21 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Flame, Send, User, Search, LayoutGrid } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Home, Flame, User, Search, LayoutGrid } from 'lucide-react';
 import Footer from './Footer';
 import LogoMark from './LogoMark';
 import ThemeToggle from './ThemeToggle';
-import NotificationPermissionPrompt from './NotificationPermissionPrompt';
-import { AdRouteScripts, ClickAdController } from './AdScripts';
+import NotificationBell from './NotificationBell';
+import { AdRouteScripts } from './AdScripts';
+import ScrollFab from './ScrollFab';
 import { useHideOnScroll } from '../lib/useHideOnScroll';
 
 function Header({ hidden }: { hidden: boolean }) {
+  const { pathname } = useLocation();
+  const pin = pathname === '/profile';
   return (
     <header
-      className={`glass sticky top-0 z-40 border-b border-line/60 transition-transform duration-300 ${
-        hidden ? '-translate-y-full' : 'translate-y-0'
+      className={`glass sticky top-0 z-50 border-b border-line/60 transition-transform duration-300 ${
+        hidden && !pin ? '-translate-y-full' : 'translate-y-0'
       }`}
     >
       <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3.5">
@@ -27,13 +31,7 @@ function Header({ hidden }: { hidden: boolean }) {
           </div>
         </Link>
         <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
-          <Link
-            to="/search"
-            aria-label="Search"
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-line bg-panel2 text-mute transition hover:border-accent/50 hover:text-accent"
-          >
-            <Search className="h-4.5 w-4.5" />
-          </Link>
+          <NotificationBell />
           <ThemeToggle compact />
         </div>
       </div>
@@ -45,31 +43,44 @@ const navItems = [
   { to: '/categories', label: 'Browse', icon: LayoutGrid },
   { to: '/toplist', label: 'Top', icon: Flame },
   { to: '/', label: 'Home', icon: Home },
-  { to: '/request', label: 'Request', icon: Send },
+  { to: '/search', label: 'Search', icon: Search },
   { to: '/profile', label: 'You', icon: User },
 ];
 
 function BottomNav({ hidden }: { hidden: boolean }) {
   const { pathname } = useLocation();
+  const pin = pathname === '/profile';
   return (
     <div
       className={`mobile-bottom-nav fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 transition-transform duration-300 ${
-        hidden ? 'translate-y-[150%]' : 'translate-y-0'
+        hidden && !pin ? 'translate-y-[150%]' : 'translate-y-0'
       }`}
     >
-      <nav className="glass flex items-center gap-1 rounded-2xl border border-line/70 p-1.5 shadow-2xl shadow-black/50">
+      <nav className="glass flex items-center gap-1 rounded-2xl border border-line/70 p-1.5 shadow-2xl shadow-black/40">
         {navItems.map(({ to, label, icon: Icon }) => {
-          const active = pathname === to;
+          const active =
+            to === '/'
+              ? pathname === '/'
+              : pathname === to || pathname.startsWith(`${to}/`);
           return (
             <Link
               key={to}
               to={to}
-              className={`mobile-nav-item shine-hover relative flex flex-col items-center gap-1 rounded-xl px-3.5 py-2 text-[10px] font-bold uppercase tracking-wider transition-all ${
-                active ? 'bg-accent text-ink' : 'text-mute hover:text-fg'
+              className={`mobile-nav-item relative flex flex-col items-center gap-1 rounded-xl px-3.5 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors ${
+                active ? 'text-ink' : 'text-mute hover:text-fg'
               }`}
             >
-              <Icon className="h-4.5 w-4.5" strokeWidth={active ? 2.6 : 2} />
-              <span>{label}</span>
+              {active && (
+                <motion.span
+                  layoutId="nav-pill"
+                  className="absolute inset-0 rounded-xl bg-accent shadow-sm shadow-accent/30"
+                  transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                />
+              )}
+              <span className="relative z-10 flex flex-col items-center gap-1">
+                <Icon className="h-4.5 w-4.5" strokeWidth={active ? 2.6 : 2} />
+                <span>{label}</span>
+              </span>
             </Link>
           );
         })}
@@ -86,9 +97,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <main className="mx-auto w-full max-w-5xl flex-1">{children}</main>
       <Footer />
       <BottomNav hidden={hidden} />
-      <NotificationPermissionPrompt />
+      <ScrollFab hidden={hidden} />
       <AdRouteScripts />
-      <ClickAdController />
     </div>
   );
 }
