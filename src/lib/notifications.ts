@@ -1,13 +1,6 @@
 import { fetchNewestApps, type AppItem } from './firebase';
 import { sanitizeText } from './security';
 
-// ============================================================
-// New-app notifications.
-// Strategy: track the newest app id (Firestore push ids are time-sortable) the
-// user has already "seen" in localStorage. On each load we fetch the newest
-// apps and anything newer than the stored marker is a fresh notification.
-// ============================================================
-
 const SEEN_KEY = 'apps-studio-seen-newest';
 const NOTIF_STORE = 'apps-studio-notifs';
 
@@ -65,7 +58,7 @@ export async function checkForNewApps(): Promise<{
 }> {
   let apps: AppItem[] = [];
   try {
-    apps = (await fetchNewestApps(60)).slice(0, 15);
+    apps = (await fetchNewestApps(20)).slice(0, 12);
   } catch {
     return { notifs: getStoredNotifs(), freshCount: 0 };
   }

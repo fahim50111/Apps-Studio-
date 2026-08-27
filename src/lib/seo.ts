@@ -1,7 +1,27 @@
-const DEFAULT_TITLE = 'Apps Studio — Free Premium Apps & Mod Games Download';
-const DEFAULT_DESC =
-  'Apps Studio — Download all premium unlock apps, mod games and free subscriptions. 100% safe, fast and free.';
-const SITE = 'Apps Studio';
+export const SITE = 'Apps Studio';
+export const DEFAULT_TITLE =
+  'Apps Studio — Free Premium Apps & Mod Games Download';
+export const DEFAULT_DESC =
+  'Download premium unlocked apps, mod games and useful tools from Apps Studio. Fast, free, and regularly updated.';
+export const DEFAULT_IMAGE =
+  'https://i.supaimg.com/cd9a9717-a15f-44d3-bd7f-a1e5dcf50d81/8cd107a9-5f9b-4457-b838-9132d8e448cb.png';
+
+export function siteOrigin(): string {
+  if (typeof window === 'undefined') return 'https://apps-studio-1f1c0.web.app';
+  return window.location.origin;
+}
+
+export function canonicalUrl(path?: string): string {
+  const origin = siteOrigin();
+  if (path) {
+    const clean = path.startsWith('/') ? path : `/${path}`;
+    return `${origin}${clean}`;
+  }
+  if (typeof window === 'undefined') return `${origin}/`;
+  const url = new URL(window.location.href);
+  url.hash = '';
+  return url.toString();
+}
 
 interface SEOOptions {
   title?: string;
@@ -9,7 +29,8 @@ interface SEOOptions {
   image?: string;
   url?: string;
   type?: string;
-  jsonLd?: Record<string, unknown> | null;
+  robots?: string;
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[] | null;
 }
 
 function setMeta(attr: 'name' | 'property', key: string, content: string) {
@@ -36,7 +57,9 @@ function setCanonical(url: string) {
 
 const JSONLD_ID = 'dynamic-jsonld';
 
-function setJsonLd(data: Record<string, unknown> | null) {
+function setJsonLd(
+  data: Record<string, unknown> | Record<string, unknown>[] | null
+) {
   const existing = document.getElementById(JSONLD_ID);
   if (existing) existing.remove();
   if (!data) return;
@@ -50,20 +73,22 @@ function setJsonLd(data: Record<string, unknown> | null) {
 export function updateSEO(opts: SEOOptions = {}) {
   const title = opts.title || DEFAULT_TITLE;
   const description = opts.description || DEFAULT_DESC;
-  const url = opts.url || window.location.href;
-  const image =
-    opts.image ||
-    'https://i.supaimg.com/cd9a9717-a15f-44d3-bd7f-a1e5dcf50d81/8cd107a9-5f9b-4457-b838-9132d8e448cb.png';
+  const url = opts.url || canonicalUrl();
+  const image = opts.image || DEFAULT_IMAGE;
   const type = opts.type || 'website';
+  const robots = opts.robots || 'index, follow';
 
   document.title = title;
   setMeta('name', 'description', description);
+  setMeta('name', 'robots', robots);
+  setMeta('name', 'author', SITE);
   setMeta('property', 'og:site_name', SITE);
   setMeta('property', 'og:title', title);
   setMeta('property', 'og:description', description);
   setMeta('property', 'og:image', image);
   setMeta('property', 'og:url', url);
   setMeta('property', 'og:type', type);
+  setMeta('property', 'og:locale', 'en_US');
   setMeta('name', 'twitter:card', 'summary_large_image');
   setMeta('name', 'twitter:title', title);
   setMeta('name', 'twitter:description', description);
@@ -76,4 +101,26 @@ export function resetSEO() {
   updateSEO();
 }
 
-export { DEFAULT_TITLE, DEFAULT_DESC };
+export function websiteJsonLd() {
+  const origin = siteOrigin();
+  return [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: SITE,
+      url: origin,
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: `${origin}/search?q={search_term_string}`,
+        'query-input': 'required name=search_term_string',
+      },
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Organization',
+      name: SITE,
+      url: origin,
+      logo: `${origin}/favicon.svg`,
+    },
+  ];
+}

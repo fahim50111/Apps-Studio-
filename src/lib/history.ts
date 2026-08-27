@@ -99,7 +99,6 @@ export function clearRecentSearches() {
   }
 }
 
-/** Lightweight suggestion pool for typeahead (name match). */
 export function filterSuggestions(
   pool: { id: string; name: string; logo?: string; category?: string }[],
   term: string,
