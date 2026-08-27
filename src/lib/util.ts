@@ -1,10 +1,5 @@
 import type { AppItem, DownloadLink } from './types';
 
-/**
- * Returns download options for display.
- * Firebase stores oldest→newest in `links[]`, so we reverse for UI:
- * last array item appears first and is marked "Latest".
- */
 export function getDownloadLinks(app: AppItem): DownloadLink[] {
   const out: DownloadLink[] = [];
   const seen = new Set<string>();
@@ -14,7 +9,6 @@ export function getDownloadLinks(app: AppItem): DownloadLink[] {
     out.push(link);
   };
 
-  // Reverse so last (newest) is first in the UI list
   const raw = (app.links || []).slice().reverse();
   raw.forEach((l, i) =>
     push({
@@ -25,7 +19,6 @@ export function getDownloadLinks(app: AppItem): DownloadLink[] {
     })
   );
 
-  // Legacy single link goes after reversed multi-links (older fallback)
   if (app.link) {
     push({
       name: app.versionName || 'Direct Download',
@@ -37,21 +30,13 @@ export function getDownloadLinks(app: AppItem): DownloadLink[] {
   return out;
 }
 
-/** Best timestamp for a download row (link → app updatedAt). */
 export function getLinkUpdatedAt(
   link: DownloadLink,
   app?: Pick<AppItem, 'updatedAt' | 'timestamp'>
 ): number | undefined {
-  return (
-    link.updatedAt ||
-    link.timestamp ||
-    app?.updatedAt ||
-    app?.timestamp ||
-    undefined
-  );
+  return link.updatedAt || link.timestamp || app?.updatedAt || app?.timestamp || undefined;
 }
 
-/** Gallery images: explicit screenshots, else cover as a single preview. */
 export function getScreenshots(app: AppItem): string[] {
   const shots = (app.screenshots || []).filter(Boolean);
   if (shots.length) return shots;
@@ -59,7 +44,6 @@ export function getScreenshots(app: AppItem): string[] {
   return [];
 }
 
-/** Version history rows derived from download links + metadata. */
 export function getVersionHistory(app: AppItem): {
   name: string;
   url: string;
@@ -75,15 +59,7 @@ export function getVersionHistory(app: AppItem): {
         ? formatRelativeDate(app.updatedAt || app.timestamp)
         : undefined;
     return app.versionName
-      ? [
-          {
-            name: app.versionName,
-            url: '',
-            size: app.size,
-            isLatest: true,
-            updatedLabel: updated,
-          },
-        ]
+      ? [{ name: app.versionName, url: '', size: app.size, isLatest: true, updatedLabel: updated }]
       : [];
   }
 
@@ -104,7 +80,6 @@ function toMs(ts?: number): number | null {
   if (!ts) return null;
   const n = Number(ts);
   if (!Number.isFinite(n) || n <= 0) return null;
-  // Support seconds or ms timestamps
   return n < 1e12 ? n * 1000 : n;
 }
 
@@ -122,7 +97,6 @@ export function formatRelativeDate(ts?: number): string {
   return formatUploadDate(ts);
 }
 
-/** Absolute calendar date for upload/publish time, e.g. "12 Mar 2026". */
 export function formatUploadDate(ts?: number): string {
   const ms = toMs(ts);
   if (!ms) return '';
@@ -137,19 +111,11 @@ export function formatUploadDate(ts?: number): string {
   }
 }
 
-/** Prefer original upload timestamp, then last update. */
-export function getAppUploadDate(app: {
-  timestamp?: number;
-  updatedAt?: number;
-}): string {
+export function getAppUploadDate(app: { timestamp?: number; updatedAt?: number }): string {
   return formatUploadDate(app.timestamp || app.updatedAt);
 }
 
-/** Prefer last update time, then original upload (for Download page badge). */
-export function getAppUpdatedDate(app: {
-  timestamp?: number;
-  updatedAt?: number;
-}): string {
+export function getAppUpdatedDate(app: { timestamp?: number; updatedAt?: number }): string {
   return formatUploadDate(app.updatedAt || app.timestamp);
 }
 
@@ -164,10 +130,7 @@ export const CATEGORIES = [
 
 export type Category = (typeof CATEGORIES)[number];
 
-export const CATEGORY_META: Record<
-  string,
-  { label: string; icon: string; color: string }
-> = {
+export const CATEGORY_META: Record<string, { label: string; icon: string; color: string }> = {
   social: { label: 'Social', icon: 'Users', color: '#1565c0' },
   games: { label: 'Games', icon: 'Gamepad2', color: '#c62828' },
   tools: { label: 'Tools', icon: 'Wrench', color: '#2e7d32' },
@@ -208,7 +171,6 @@ export function formatCount(n?: number): string {
   return String(v);
 }
 
-// deterministic gradient fallback image for missing logos
 export function fallbackLogo(name: string): string {
   const letter = (name.trim()[0] || 'A').toUpperCase();
   const colors = ['#1a73e8', '#c62828', '#2e7d32', '#e65100', '#6a1b9a', '#00695c'];
