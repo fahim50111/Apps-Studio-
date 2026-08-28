@@ -4,6 +4,7 @@ import type { AppRequest } from '../lib/types';
 import { updateSEO } from '../lib/seo';
 import { LIMITS, openExternal } from '../lib/security';
 import { formatUploadDate } from '../lib/util';
+import { AdBanner } from '../components/AdScripts';
 import {
   Send,
   CheckCircle2,
@@ -18,15 +19,7 @@ const WHATSAPP_URL = 'https://wa.me/message/L3EUGB2Q7GHXN1';
 
 function isCompleted(status: string) {
   const s = status.toLowerCase().trim();
-  return (
-    s === 'completed' ||
-    s === 'complete' ||
-    s === 'done' ||
-    s === 'added' ||
-    s === 'resolved' ||
-    s === 'finished' ||
-    s === 'approved'
-  );
+  return ['completed', 'complete', 'done', 'added', 'resolved', 'finished', 'approved'].includes(s);
 }
 
 function statusLabel(status: string) {
@@ -39,9 +32,7 @@ function statusLabel(status: string) {
 export default function RequestPage() {
   const [name, setName] = useState('');
   const [note, setNote] = useState('');
-  const [status, setStatus] = useState<'idle' | 'sending' | 'done' | 'error'>(
-    'idle'
-  );
+  const [status, setStatus] = useState<'idle' | 'sending' | 'done' | 'error'>('idle');
   const [delivery, setDelivery] = useState<'firestore' | 'local' | null>(null);
   const [requests, setRequests] = useState<AppRequest[]>([]);
   const [listLoading, setListLoading] = useState(true);
@@ -51,9 +42,7 @@ export default function RequestPage() {
     setListLoading(true);
     setListError(false);
     try {
-      const items = await fetchRequests(100);
-      setRequests(items);
-      // Empty array is valid — only flag hard failures if fetch throws.
+      setRequests(await fetchRequests(100));
     } catch {
       setListError(true);
     } finally {
@@ -64,8 +53,7 @@ export default function RequestPage() {
   useEffect(() => {
     updateSEO({
       title: 'Request an App — Apps Studio',
-      description:
-        "Can't find an app or game? Request it on Apps Studio and see the latest public requests.",
+      description: "Can't find an app or game? Request it on Apps Studio and see the latest public requests.",
     });
     loadRequests();
   }, [loadRequests]);
@@ -80,9 +68,7 @@ export default function RequestPage() {
       setStatus('done');
       setName('');
       setNote('');
-      if (result === 'firestore') {
-        await loadRequests();
-      }
+      if (result === 'firestore') await loadRequests();
       setTimeout(() => {
         setStatus('idle');
         setDelivery(null);
@@ -100,22 +86,13 @@ export default function RequestPage() {
           <Inbox className="h-5 w-5 text-accent2" />
         </div>
         <div>
-          <h1 className="font-display text-xl font-extrabold text-fg">
-            Request an App
-          </h1>
-          <p className="text-xs text-mute">
-            Can't find it? Tell us and we'll add it.
-          </p>
+          <h1 className="font-display text-xl font-extrabold text-fg">Request an App</h1>
+          <p className="text-xs text-mute">Can't find it? Tell us and we'll add it.</p>
         </div>
       </div>
 
-      <form
-        onSubmit={submit}
-        className="rounded-3xl border border-line/70 bg-panel p-5"
-      >
-        <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-mute">
-          App / Game name
-        </label>
+      <form onSubmit={submit} className="rounded-3xl border border-line/70 bg-panel p-5">
+        <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-mute">App / Game name</label>
         <input
           value={name}
           onChange={(e) => setName(e.target.value.slice(0, LIMITS.requestName))}
@@ -123,10 +100,7 @@ export default function RequestPage() {
           placeholder="e.g. Spotify Premium Mod"
           className="mb-4 w-full rounded-xl border border-line bg-panel2 px-4 py-3 text-sm text-fg outline-none transition placeholder:text-mute focus:border-accent/50"
         />
-
-        <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-mute">
-          Details (optional)
-        </label>
+        <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-mute">Details (optional)</label>
         <textarea
           value={note}
           onChange={(e) => setNote(e.target.value.slice(0, LIMITS.requestNote))}
@@ -135,129 +109,63 @@ export default function RequestPage() {
           placeholder="Version, features you need, or any notes..."
           className="mb-4 w-full resize-none rounded-xl border border-line bg-panel2 px-4 py-3 text-sm text-fg outline-none transition placeholder:text-mute focus:border-accent/50"
         />
-        <div className="mb-4 -mt-2 text-right text-[10px] text-mute">
-          {note.length}/{LIMITS.requestNote}
-        </div>
-
-        <button
-          type="submit"
-          disabled={status === 'sending' || !name.trim()}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-3.5 text-sm font-extrabold text-ink transition hover:brightness-110 disabled:opacity-40"
-        >
-          {status === 'sending' ? (
-            'Sending...'
-          ) : (
-            <>
-              <Send className="h-4 w-4" />
-              Submit Request
-            </>
-          )}
+        <div className="mb-4 -mt-2 text-right text-[10px] text-mute">{note.length}/{LIMITS.requestNote}</div>
+        <button type="submit" disabled={status === 'sending' || !name.trim()} className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-3.5 text-sm font-extrabold text-ink transition hover:brightness-110 disabled:opacity-40">
+          {status === 'sending' ? 'Sending...' : (<><Send className="h-4 w-4" /> Submit Request</>)}
         </button>
-
+        <div className="mt-4">
+          <AdBanner compact adKey="71971cef439f7e47d3f26f03c0ce1844" width={320} height={50} />
+        </div>
         {status === 'done' && (
           <div className="mt-4 rounded-xl bg-accent/10 px-4 py-3 text-sm font-semibold text-accent ring-1 ring-accent/25">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4" />
-              {delivery === 'local'
-                ? 'Request saved. Please send it on WhatsApp too.'
-                : 'Request submitted. Thank you!'}
+              {delivery === 'local' ? 'Request saved. Please send it on WhatsApp too.' : 'Request submitted. Thank you!'}
             </div>
             {delivery === 'local' && (
-              <button
-                type="button"
-                onClick={() => openExternal(WHATSAPP_URL)}
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-[#25D366] px-3 py-2 text-xs font-extrabold text-ink"
-              >
-                <MessageCircle className="h-3.5 w-3.5" />
-                Send on WhatsApp
+              <button type="button" onClick={() => openExternal(WHATSAPP_URL)} className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-[#25D366] px-3 py-2 text-xs font-extrabold text-ink">
+                <MessageCircle className="h-3.5 w-3.5" /> Send on WhatsApp
               </button>
             )}
           </div>
         )}
         {status === 'error' && (
-          <div className="mt-4 rounded-xl bg-accent3/10 px-4 py-3 text-sm font-semibold text-accent3 ring-1 ring-accent3/25">
-            Something went wrong. Please try again.
-          </div>
+          <div className="mt-4 rounded-xl bg-accent3/10 px-4 py-3 text-sm font-semibold text-accent3 ring-1 ring-accent3/25">Something went wrong. Please try again.</div>
         )}
       </form>
 
-      {/* Single public list — newest on top */}
       <section className="mt-8">
         <div className="mb-3 flex items-center justify-between gap-2 px-1">
-          <h2 className="font-display text-base font-bold text-fg">
-            All requests
-          </h2>
-          <button
-            type="button"
-            onClick={() => loadRequests()}
-            className="flex items-center gap-1.5 rounded-lg border border-line bg-panel2 px-2.5 py-1.5 text-[11px] font-bold text-mute transition hover:text-fg"
-          >
-            <RefreshCw
-              className={`h-3.5 w-3.5 ${listLoading ? 'animate-spin' : ''}`}
-            />
-            Refresh
+          <h2 className="font-display text-base font-bold text-fg">All requests</h2>
+          <button type="button" onClick={() => loadRequests()} className="flex items-center gap-1.5 rounded-lg border border-line bg-panel2 px-2.5 py-1.5 text-[11px] font-bold text-mute transition hover:text-fg">
+            <RefreshCw className={`h-3.5 w-3.5 ${listLoading ? 'animate-spin' : ''}`} /> Refresh
           </button>
         </div>
-
         <div className="rounded-3xl border border-line/70 bg-panel p-4">
           {listLoading ? (
             <div className="flex items-center justify-center gap-2 py-12 text-sm text-mute">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Loading requests…
+              <Loader2 className="h-4 w-4 animate-spin" /> Loading requests…
             </div>
           ) : listError ? (
-            <div className="rounded-2xl border border-accent3/30 bg-accent3/10 px-4 py-6 text-center text-sm text-accent3">
-              Could not load requests. Deploy Firestore rules, then refresh.
-            </div>
+            <div className="rounded-2xl border border-accent3/30 bg-accent3/10 px-4 py-6 text-center text-sm text-accent3">Could not load requests. Deploy Firestore rules, then refresh.</div>
           ) : requests.length === 0 ? (
-            <p className="py-8 text-center text-xs text-mute">
-              No requests yet. Be the first!
-            </p>
+            <p className="py-8 text-center text-xs text-mute">No requests yet. Be the first!</p>
           ) : (
             <ul className="divide-y divide-line/60">
               {requests.map((r) => {
                 const done = isCompleted(r.status);
                 return (
-                  <li
-                    key={r.id}
-                    className="flex gap-3 py-3 first:pt-0 last:pb-0"
-                  >
-                    <span
-                      className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
-                        done
-                          ? 'bg-accent/15 text-accent'
-                          : 'bg-panel2 text-accent2 ring-1 ring-line'
-                      }`}
-                    >
-                      {done ? (
-                        <CheckCircle2 className="h-4 w-4" />
-                      ) : (
-                        <Clock3 className="h-4 w-4" />
-                      )}
+                  <li key={r.id} className="flex gap-3 py-3 first:pt-0 last:pb-0">
+                    <span className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${done ? 'bg-accent/15 text-accent' : 'bg-panel2 text-accent2 ring-1 ring-line'}`}>
+                      {done ? <CheckCircle2 className="h-4 w-4" /> : <Clock3 className="h-4 w-4" />}
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="truncate text-sm font-bold text-fg">
-                          {r.name}
-                        </p>
-                        <span
-                          className={`rounded-md px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wide ${
-                            done
-                              ? 'bg-accent/15 text-accent'
-                              : 'bg-accent2/15 text-accent2'
-                          }`}
-                        >
-                          {statusLabel(r.status)}
-                        </span>
+                        <p className="truncate text-sm font-bold text-fg">{r.name}</p>
+                        <span className={`rounded-md px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wide ${done ? 'bg-accent/15 text-accent' : 'bg-accent2/15 text-accent2'}`}>{statusLabel(r.status)}</span>
                       </div>
-                      {r.text && (
-                        <p className="mt-0.5 line-clamp-2 text-xs text-mute">
-                          {r.text}
-                        </p>
-                      )}
-                      <p className="mt-1 text-[10px] font-semibold text-mute">
-                        {r.date || formatUploadDate(r.timestamp) || '—'}
-                      </p>
+                      {r.text && <p className="mt-0.5 line-clamp-2 text-xs text-mute">{r.text}</p>}
+                      <p className="mt-1 text-[10px] font-semibold text-mute">{r.date || formatUploadDate(r.timestamp) || '—'}</p>
                     </div>
                   </li>
                 );
