@@ -41,9 +41,7 @@ export default function TopList() {
           <Flame className="h-5 w-5 text-accent3" />
         </div>
         <div>
-          <h1 className="font-display text-xl font-extrabold text-fg">
-            Top Charts
-          </h1>
+          <h1 className="font-display text-xl font-extrabold text-fg">Top Charts</h1>
           <p className="text-xs text-mute">Top {TOP_MAX} most downloaded</p>
         </div>
       </div>

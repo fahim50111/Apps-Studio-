@@ -67,9 +67,7 @@ export function getRecentSearches(): string[] {
 export function addRecentSearch(term: string): string[] {
   const t = term.trim();
   if (!t) return getRecentSearches();
-  const prev = getRecentSearches().filter(
-    (s) => s.toLowerCase() !== t.toLowerCase()
-  );
+  const prev = getRecentSearches().filter((s) => s.toLowerCase() !== t.toLowerCase());
   const next = [t, ...prev].slice(0, MAX_RECENT_SEARCHES);
   try {
     localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(next));
@@ -80,9 +78,7 @@ export function addRecentSearch(term: string): string[] {
 }
 
 export function removeRecentSearch(term: string): string[] {
-  const next = getRecentSearches().filter(
-    (s) => s.toLowerCase() !== term.toLowerCase()
-  );
+  const next = getRecentSearches().filter((s) => s.toLowerCase() !== term.toLowerCase());
   try {
     localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(next));
   } catch {
@@ -106,7 +102,5 @@ export function filterSuggestions(
 ) {
   const t = term.trim().toLowerCase();
   if (!t) return [];
-  return pool
-    .filter((a) => a.name.toLowerCase().includes(t))
-    .slice(0, max);
+  return pool.filter((a) => a.name.toLowerCase().includes(t)).slice(0, max);
 }

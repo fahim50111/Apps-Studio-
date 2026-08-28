@@ -97,10 +97,7 @@ export async function checkForNewApps(): Promise<{
 
 export function markAllSeen(notifs: NotifItem[]) {
   if (notifs.length) {
-    const newest = notifs.reduce(
-      (max, n) => (n.id > max ? n.id : max),
-      notifs[0].id
-    );
+    const newest = notifs.reduce((max, n) => (n.id > max ? n.id : max), notifs[0].id);
     setSeen(newest);
   }
 }
@@ -135,8 +132,7 @@ export async function requestNotificationPermission(): Promise<boolean> {
 function maybeNativeNotify(item: NotifItem, count: number) {
   if (!notificationsSupported() || Notification.permission !== 'granted') return;
   try {
-    const title =
-      count > 1 ? `${count} new apps on Apps Studio` : 'New app available';
+    const title = count > 1 ? `${count} new apps on Apps Studio` : 'New app available';
     const body = count > 1 ? `Including ${item.name}` : item.name;
     const n = new Notification(title, {
       body,

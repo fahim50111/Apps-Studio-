@@ -33,17 +33,11 @@ function Chip({ cat }: { cat: string }) {
       >
         {Icon && <Icon className="h-3.5 w-3.5" style={{ color: meta.color }} />}
       </span>
-      <span className="whitespace-nowrap text-xs font-bold text-fg">
-        {meta.label}
-      </span>
+      <span className="whitespace-nowrap text-xs font-bold text-fg">{meta.label}</span>
     </Link>
   );
 }
 
-/**
- * Auto-scrolling (marquee) category chips. The list is duplicated so the
- * translateX(-50%) loop is seamless. Pauses on hover.
- */
 export default function CategoryMarquee() {
   const loop = [...CATEGORIES, ...CATEGORIES];
   return (
