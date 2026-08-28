@@ -55,9 +55,7 @@ export function getVersionHistory(app: AppItem): {
 
   if (!links.length) {
     const updated =
-      app.updatedAt || app.timestamp
-        ? formatRelativeDate(app.updatedAt || app.timestamp)
-        : undefined;
+      app.updatedAt || app.timestamp ? formatRelativeDate(app.updatedAt || app.timestamp) : undefined;
     return app.versionName
       ? [{ name: app.versionName, url: '', size: app.size, isLatest: true, updatedLabel: updated }]
       : [];
