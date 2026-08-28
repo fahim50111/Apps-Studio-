@@ -1,3 +1,14 @@
+/**
+ * ViewPorter-style multi-layer cache
+ * ----------------------------------
+ * 1) Memory (instant, same session)
+ * 2) localStorage (survives reloads, TTL)
+ * 3) In-flight promise dedupe (one network call for N waiters)
+ * 4) Stale-while-revalidate (serve stale → refresh in background)
+ *
+ * Cuts Firestore reads when users navigate Home ↔ Detail ↔ Top repeatedly.
+ */
+
 type Entry<T> = {
   v: T;
   exp: number;
@@ -34,9 +45,7 @@ function lsSet<T>(key: string, entry: Entry<T>) {
         const k = localStorage.key(i);
         if (k?.startsWith(PREFIX)) keys.push(k);
       }
-      keys.slice(0, Math.ceil(keys.length / 3)).forEach((k) =>
-        localStorage.removeItem(k)
-      );
+      keys.slice(0, Math.ceil(keys.length / 3)).forEach((k) => localStorage.removeItem(k));
       localStorage.setItem(PREFIX + key, JSON.stringify(entry));
     } catch {
       /* ignore */
@@ -164,8 +173,7 @@ export function invalidateCache(prefixOrKey?: string) {
     const keys: string[] = [];
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
-      if (k?.startsWith(PREFIX + prefixOrKey) || k === PREFIX + prefixOrKey)
-        keys.push(k);
+      if (k?.startsWith(PREFIX + prefixOrKey) || k === PREFIX + prefixOrKey) keys.push(k);
     }
     keys.forEach((k) => localStorage.removeItem(k));
   } catch {

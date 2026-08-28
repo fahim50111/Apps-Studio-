@@ -9,9 +9,7 @@ export type InViewOptions = {
   eager?: boolean;
 };
 
-export function useInView<T extends Element = HTMLDivElement>(
-  opts: InViewOptions = {}
-) {
+export function useInView<T extends Element = HTMLDivElement>(opts: InViewOptions = {}) {
   const {
     rootMargin = '240px 0px',
     once = true,
@@ -65,8 +63,7 @@ export function useViewportQuery<T>(
 
   const { ref, inView } = useInView(opts);
   const [data, setData] = useState<T | undefined>(() => {
-    if (typeof opts.initial === 'function')
-      return (opts.initial as () => T | undefined)();
+    if (typeof opts.initial === 'function') return (opts.initial as () => T | undefined)();
     if (opts.initial !== undefined) return opts.initial;
     return key ? peekCache<T>(String(key)) : undefined;
   });
@@ -112,9 +109,7 @@ export function usePorter<T>(
   } = {}
 ) {
   const seed =
-    typeof opts.seed === 'function'
-      ? (opts.seed as () => T | undefined)()
-      : opts.seed;
+    typeof opts.seed === 'function' ? (opts.seed as () => T | undefined)() : opts.seed;
   return useViewportQuery(key, loader, {
     ...opts,
     initial: seed ?? (() => peekCache<T>(key)),
