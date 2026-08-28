@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <link id="app-favicon" rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="any" />
+    <link rel="favicon.svg" href="/favicon.svg" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="canonical" href="https://apps-studio-1f1c0.web.app/" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
@@ -11,7 +12,7 @@
     <meta name="keywords" content="apps studio, mod apk, premium apps, mod games, free download, unlocked apps" />
     <meta name="robots" content="index, follow" />
     <meta name="author" content="Apps Studio" />
-    <meta name="google-site-verification" content="Cw3ipecSIbG4QRapcwicy4qDWnH14_7vxd1lCGk2-zU" />
+   <meta name="google-site-verification" content="Cw3ipecSIbG4QRapcwicy4qDWnH14_7vxd1lCGk2-zU" />
     <meta property="og:site_name" content="Apps Studio" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://apps-studio-1f1c0.web.app/" />
@@ -27,6 +28,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <script data-arena-recording="true" src="/arena-recording.js"></script>
+    <script data-arena-views="true" src="/arena-views.js"></script>
+    <!--
+      PopHolder is injected here (last child of <head>) only on /app/:id
+      by src/components/AdScripts.tsx — never hard-coded, so other pages stay clean.
+    -->
   </head>
   <body>
     <script>
@@ -35,9 +42,12 @@
           var m = localStorage.getItem('apps-studio-theme') || 'light';
           var dark =
             m === 'dark' ||
-            (m === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            (m === 'system' &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches);
           document.documentElement.classList.add(dark ? 'theme-dark' : 'theme-light');
-          document.documentElement.classList.add('theme-month-' + (new Date().getMonth() + 1));
+          document.documentElement.classList.add(
+            'theme-month-' + (new Date().getMonth() + 1)
+          );
           document.documentElement.dataset.socialAd = 'off';
           document.documentElement.dataset.popAd = 'off';
         } catch (e) {
@@ -50,5 +60,10 @@
     </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script data-element-picker src="/element-picker.js"></script>
+    <!--
+      SocialBar is injected here (last child of <body>) only on Home / Browse / Top List
+      by src/components/AdScripts.tsx — never hard-coded, so other pages stay clean.
+    -->
   </body>
 </html>
