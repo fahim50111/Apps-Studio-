@@ -5,8 +5,8 @@ import type { AppItem } from '../lib/types';
 import { peekCache } from '../lib/cache';
 import { usePorter } from '../lib/viewporter';
 import {
-  getName, catLabel, catColor, formatCount,
-  getDownloadLinks, getScreenshots, getVersionHistory, formatRelativeDate,
+  getName, catLabel, catColor, formatCount, getDownloadLinks,
+  getScreenshots, getVersionHistory, formatRelativeDate,
 } from '../lib/util';
 import { trackAppView } from '../lib/history';
 import { updateSEO, resetSEO } from '../lib/seo';
@@ -16,8 +16,8 @@ import AppImage from '../components/AppImage';
 import { CardSkeleton } from '../components/Skeletons';
 import TopProgress from '../components/TopProgress';
 import {
-  ArrowLeft, Download, Share2, HardDrive, ShieldCheck, Info, Layers, Flame,
-  ChevronRight, History, Images, X, CheckCircle2,
+  ArrowLeft, Download, Share2, HardDrive, ShieldCheck, Info, Layers,
+  Flame, ChevronRight, History, Images, X, CheckCircle2,
 } from 'lucide-react';
 
 export default function AppDetail() {
@@ -143,14 +143,13 @@ export default function AppDetail() {
       <div className="px-4 pt-4">
         {hasDownloads ? (
           <Link to={`/download/${app.id}`} onClick={() => { if (notificationPermission() === 'default') void requestNotificationPermission(); }} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-accent py-4 text-sm font-extrabold text-ink shadow-lg shadow-accent/25 transition hover:brightness-110">
-            <Download className="h-5 w-5" />{multi ? 'Choose Version & Download' : 'Download Free'}
+            <Download className="h-5 w-5" /> {multi ? 'Choose Version & Download' : 'Download Free'}
           </Link>
         ) : (
           <button type="button" onClick={() => showToast('Download link not available yet.')} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-accent py-4 text-sm font-extrabold text-ink opacity-60">
-            <Download className="h-5 w-5" />Download Free
+            <Download className="h-5 w-5" /> Download Free
           </button>
         )}
-
         <div className="mt-3 grid grid-cols-3 gap-2">
           {[{ icon: ShieldCheck, label: 'Verified link' }, { icon: Layers, label: 'Multi version' }, { icon: CheckCircle2, label: 'Free access' }].map(({ icon: Icon, label }) => (
             <div key={label} className="flex flex-col items-center gap-1 rounded-xl border border-line/60 bg-panel px-2 py-2.5 text-center">
@@ -159,18 +158,15 @@ export default function AppDetail() {
             </div>
           ))}
         </div>
-
         <div className="mt-4 grid grid-cols-3 gap-3">
           <Stat icon={<HardDrive className="mx-auto mb-1 h-4 w-4 text-mute" />} label="Size" value={app.size || '—'} />
           <Stat icon={<Flame className="mx-auto mb-1 h-4 w-4 text-accent3" />} label="Downloads" value={formatCount(app.downloads || 0)} />
           <Stat icon={<Layers className="mx-auto mb-1 h-4 w-4 text-accent2" />} label="Versions" value={String(links.length || 1)} />
         </div>
-
-        {updated && <p className="mt-3 flex items-center gap-1.5 px-1 text-[11px] font-semibold text-mute"><History className="h-3.5 w-3.5" />Updated {updated}</p>}
-
+        {updated && <p className="mt-3 flex items-center gap-1.5 px-1 text-[11px] font-semibold text-mute"><History className="h-3.5 w-3.5" /> Updated {updated}</p>}
         {screenshots.length > 0 && (
           <section className="mt-6">
-            <h2 className="font-display mb-3 flex items-center gap-2 text-sm font-bold text-fg"><Images className="h-4 w-4 text-accent2" />Screenshots</h2>
+            <h2 className="font-display mb-3 flex items-center gap-2 text-sm font-bold text-fg"><Images className="h-4 w-4 text-accent2" /> Screenshots</h2>
             <div className="no-scrollbar -mx-1 flex gap-3 overflow-x-auto px-1 pb-1">
               {screenshots.map((src, i) => (
                 <button key={`${src}-${i}`} onClick={() => setLightbox(i)} className="shrink-0 overflow-hidden rounded-2xl border border-line/70 bg-panel2 shadow-sm transition hover:border-accent/40">
@@ -180,11 +176,10 @@ export default function AppDetail() {
             </div>
           </section>
         )}
-
         {versions.length > 0 && (
           <section className="mt-6 rounded-2xl border border-line/70 bg-panel p-4">
             <div className="mb-3 flex items-center justify-between gap-2">
-              <h2 className="font-display flex items-center gap-2 text-sm font-bold text-fg"><History className="h-4 w-4 text-accent" />Available versions</h2>
+              <h2 className="font-display flex items-center gap-2 text-sm font-bold text-fg"><History className="h-4 w-4 text-accent" /> Available versions</h2>
               {hasDownloads && <Link to={`/download/${app.id}`} className="text-[11px] font-bold text-accent">Download page</Link>}
             </div>
             <ul className="divide-y divide-line/60">
@@ -200,29 +195,25 @@ export default function AppDetail() {
             </ul>
             {hasDownloads && (
               <Link to={`/download/${app.id}`} className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-accent/30 bg-accent/10 py-3 text-xs font-extrabold text-accent transition hover:bg-accent hover:text-ink">
-                <Download className="h-3.5 w-3.5" />Go to download page
+                <Download className="h-3.5 w-3.5" /> Go to download page
               </Link>
             )}
           </section>
         )}
-
         {app.description && (
           <div className="mt-5 rounded-2xl border border-line/70 bg-panel p-5">
-            <h2 className="font-display mb-2 flex items-center gap-2 text-sm font-bold text-fg"><Info className="h-4 w-4 text-accent" />About</h2>
+            <h2 className="font-display mb-2 flex items-center gap-2 text-sm font-bold text-fg"><Info className="h-4 w-4 text-accent" /> About</h2>
             <p className="whitespace-pre-line text-sm leading-relaxed text-mute">{app.description}</p>
           </div>
         )}
       </div>
-
       {app.category && <RelatedApps category={app.category} excludeId={app.id} />}
-
       {lightbox !== null && screenshots[lightbox] && (
         <div className="fixed inset-0 z-[85] flex items-center justify-center bg-black/85 p-4" onClick={() => setLightbox(null)}>
           <button className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-white" onClick={() => setLightbox(null)} aria-label="Close"><X className="h-5 w-5" /></button>
           <AppImage src={screenshots[lightbox]} alt={`${name} screenshot`} priority fallbackName={name} className="max-h-[85vh] max-w-full rounded-2xl object-contain" onClick={(e) => e.stopPropagation()} />
         </div>
       )}
-
       {toast && <div className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-full bg-panel px-5 py-2.5 text-xs font-bold text-fg shadow-xl ring-1 ring-line">{toast}</div>}
     </div>
   );
