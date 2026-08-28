@@ -32,9 +32,7 @@ export default function Footer() {
 
           <div className="grid grid-cols-2 gap-6 sm:grid-cols-[160px_190px]">
             <div>
-              <h4 className="font-display mb-3 text-xs font-bold uppercase tracking-wider text-fg">
-                Menu
-              </h4>
+              <h4 className="font-display mb-3 text-xs font-bold uppercase tracking-wider text-fg">Menu</h4>
               <nav className="grid gap-2 text-sm text-mute">
                 <Link to="/categories" className="transition hover:text-accent">Browse</Link>
                 <Link to="/toplist" className="transition hover:text-accent">Top Charts</Link>
@@ -45,18 +43,13 @@ export default function Footer() {
             </div>
 
             <div>
-              <h4 className="font-display mb-3 text-xs font-bold uppercase tracking-wider text-fg">
-                Contact
-              </h4>
+              <h4 className="font-display mb-3 text-xs font-bold uppercase tracking-wider text-fg">Contact</h4>
               <div className="space-y-2 text-sm text-mute">
                 <span className="flex items-center gap-2">
                   <Mail className="h-4 w-4 text-accent2" />
                   <span className="select-all break-all">{CONTACT_EMAIL}</span>
                 </span>
-                <button
-                  onClick={() => openExternal(WHATSAPP_URL)}
-                  className="flex items-center gap-2 transition hover:text-accent"
-                >
+                <button onClick={() => openExternal(WHATSAPP_URL)} className="flex items-center gap-2 transition hover:text-accent">
                   <MessageCircle className="h-4 w-4 text-[#25D366]" />
                   WhatsApp Support
                 </button>

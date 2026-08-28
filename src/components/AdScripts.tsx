@@ -124,13 +124,7 @@ export function AdBanner({
     el.setAttribute('data-ad-write-target', '1');
     window.__adWriteKind = 'banner';
     window.__adWriteSlot = el;
-    window.atOptions = {
-      key,
-      format: 'iframe',
-      height: h,
-      width: w,
-      params: {},
-    };
+    window.atOptions = { key, format: 'iframe', height: h, width: w, params: {} };
     const cfg = document.createElement('script');
     cfg.type = 'text/javascript';
     cfg.text = `atOptions = {'key':'${key}','format':'iframe','height':${h},'width':${w},'params':{}};`;
@@ -152,18 +146,8 @@ export function AdBanner({
   }, [key, src, w, h]);
 
   return (
-    <div
-      className={`mx-auto flex w-full justify-center rounded-2xl border border-line bg-panel p-3 ${
-        compact ? 'max-w-[340px]' : ''
-      }`}
-      data-ad-banner
-    >
-      <div
-        ref={ref}
-        className="overflow-hidden rounded-xl"
-        style={{ width: w, maxWidth: '100%', minHeight: h }}
-        data-ad-write-target="1"
-      />
+    <div className={`mx-auto flex w-full justify-center rounded-2xl border border-line bg-panel p-3 ${compact ? 'max-w-[340px]' : ''}`} data-ad-banner>
+      <div ref={ref} className="overflow-hidden rounded-xl" style={{ width: w, maxWidth: '100%', minHeight: h }} data-ad-write-target="1" />
     </div>
   );
 }
