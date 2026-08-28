@@ -15,22 +15,9 @@ import {
   clearRecentSearches,
   filterSuggestions,
 } from '../lib/history';
-import {
-  Search as SearchIcon,
-  X,
-  SearchX,
-  Loader2,
-  Clock,
-  TrendingUp,
-  Trash2,
-} from 'lucide-react';
+import { Search as SearchIcon, X, SearchX, Loader2, Clock, TrendingUp, Trash2 } from 'lucide-react';
 
-type SuggestItem = {
-  id: string;
-  name: string;
-  logo?: string;
-  category?: string;
-};
+type SuggestItem = { id: string; name: string; logo?: string; category?: string };
 
 export default function SearchPage() {
   const [params, setParams] = useSearchParams();
@@ -42,6 +29,7 @@ export default function SearchPage() {
   const [recent, setRecent] = useState<string[]>(() => getRecentSearches());
   const [pool, setPool] = useState<SuggestItem[]>([]);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const committed = useRef(initial.trim());
 
   useEffect(() => {
     updateSEO({
@@ -68,7 +56,10 @@ export default function SearchPage() {
       searchApps(term)
         .then((list) => {
           setResults(list);
-          if (term.length >= 2) setRecent(addRecentSearch(term));
+          if (term.length >= 2) {
+            committed.current = term;
+            setRecent(addRecentSearch(term));
+          }
         })
         .finally(() => setSearching(false));
     }, term ? 350 : 0);
@@ -108,16 +99,11 @@ export default function SearchPage() {
 
       {!searching && suggestions.length > 0 && q.trim() && results.length === 0 && (
         <div className="mb-5 overflow-hidden rounded-2xl border border-line/70 bg-panel">
-          <p className="border-b border-line/60 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-mute">
-            Suggestions
-          </p>
+          <p className="border-b border-line/60 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-mute">Suggestions</p>
           <ul>
             {suggestions.map((s) => (
               <li key={s.id} className="border-b border-line/40 last:border-0">
-                <button
-                  onClick={() => pickSuggestion(s.name)}
-                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition hover:bg-panel2"
-                >
+                <button onClick={() => pickSuggestion(s.name)} className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition hover:bg-panel2">
                   <AppImage src={s.logo} alt={s.name} fallbackName={s.name} className="h-9 w-9 rounded-lg object-cover" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-bold text-fg">{s.name}</p>
@@ -141,19 +127,13 @@ export default function SearchPage() {
                 <h2 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-mute">
                   <Clock className="h-3.5 w-3.5" /> Recent searches
                 </h2>
-                <button
-                  onClick={() => {
-                    clearRecentSearches();
-                    setRecent([]);
-                  }}
-                  className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-mute transition hover:text-accent3"
-                >
+                <button onClick={() => { clearRecentSearches(); setRecent([]); }} className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-mute transition hover:text-accent3">
                   <Trash2 className="h-3 w-3" /> Clear
                 </button>
               </div>
               <div className="flex flex-wrap gap-2">
                 {recent.map((term) => (
-                  <span key={term} className="inline-flex items-center gap-1 rounded-full border border-line bg-panel2 py-1.5 pl-3 pr-1.5 text-xs font-semibold text-fg">
+                  <span key={term} className="inline-flex items-center gap-1 rounded-full border border-line bg-panel2 pl-3 pr-1.5 py-1.5 text-xs font-semibold text-fg">
                     <button onClick={() => pickRecent(term)} className="max-w-[180px] truncate transition hover:text-accent">{term}</button>
                     <button onClick={() => setRecent(removeRecentSearch(term))} className="flex h-6 w-6 items-center justify-center rounded-full text-mute hover:bg-panel hover:text-fg" aria-label={`Remove ${term}`}>
                       <X className="h-3 w-3" />
@@ -170,9 +150,7 @@ export default function SearchPage() {
               </h2>
               <div className="flex flex-wrap gap-2">
                 {pool.slice(0, 10).map((p) => (
-                  <button key={p.id} onClick={() => pickSuggestion(p.name)} className="rounded-full border border-line bg-panel px-3 py-1.5 text-xs font-semibold text-mute transition hover:border-accent/40 hover:text-accent">
-                    {p.name}
-                  </button>
+                  <button key={p.id} onClick={() => pickSuggestion(p.name)} className="rounded-full border border-line bg-panel px-3 py-1.5 text-xs font-semibold text-mute transition hover:border-accent/40 hover:text-accent">{p.name}</button>
                 ))}
               </div>
             </section>
@@ -186,9 +164,7 @@ export default function SearchPage() {
         </div>
       ) : results.length ? (
         <>
-          <p className="mb-3 px-1 text-[11px] font-bold uppercase tracking-wider text-mute">
-            {results.length} result{results.length > 1 ? 's' : ''} · "{q}"
-          </p>
+          <p className="mb-3 px-1 text-[11px] font-bold uppercase tracking-wider text-mute">{results.length} result{results.length > 1 ? 's' : ''} · "{q}"</p>
           <div className="space-y-3">
             {results.map((a) => (
               <ListItem key={a.id} app={a} />
@@ -199,9 +175,7 @@ export default function SearchPage() {
         <div className="flex flex-col items-center py-24 text-center text-mute">
           <SearchX className="mb-3 h-12 w-12" />
           <p className="text-sm">No results found for "{q}"</p>
-          <Link to="/request" className="mt-4 text-xs font-bold text-accent underline-offset-2 hover:underline">
-            Request this app
-          </Link>
+          <Link to="/request" className="mt-4 text-xs font-bold text-accent underline-offset-2 hover:underline">Request this app</Link>
         </div>
       ) : null}
     </div>
