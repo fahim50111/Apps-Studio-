@@ -184,7 +184,6 @@ export default function Profile() {
           <Send className="h-4 w-4 text-mute" />
         </button>
       </div>
-
       <p className="mt-6 text-center text-[11px] text-mute">Apps Studio · Free premium unlocked apps</p>
     </div>
   );
