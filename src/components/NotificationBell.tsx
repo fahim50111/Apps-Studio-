@@ -88,15 +88,14 @@ export default function NotificationBell() {
             <p className="text-sm font-bold text-fg">Notifications</p>
             <div className="flex items-center gap-2">
               {notifs.length > 0 && (
-                <button onClick={clearAll} className="text-[11px] font-bold text-mute hover:text-fg">
-                  Clear
-                </button>
+                <button onClick={clearAll} className="text-[11px] font-bold text-mute hover:text-fg">Clear</button>
               )}
               <button onClick={() => setOpen(false)} aria-label="Close">
                 <X className="h-4 w-4 text-mute hover:text-fg" />
               </button>
             </div>
           </div>
+
           {perm !== 'granted' && perm !== 'unsupported' && (
             <button
               onClick={enablePush}
@@ -112,6 +111,7 @@ export default function NotificationBell() {
               Alerts enabled
             </div>
           )}
+
           <div className="max-h-96 overflow-y-auto">
             {notifs.length === 0 ? (
               <div className="flex flex-col items-center px-6 py-10 text-center text-mute">
