@@ -2,6 +2,7 @@ import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
+// https://vite.dev/config/
 export default defineConfig(async ({ mode }) => {
   const plugins = [react(), tailwindcss()];
   try {
@@ -11,7 +12,7 @@ export default defineConfig(async ({ mode }) => {
   } catch {}
 
   const env = loadEnv(mode, process.cwd(), ['VITE_', 'NEXT_PUBLIC_']);
-  const processEnvDefines = {};
+  const processEnvDefines: Record<string, string> = {};
   for (const [key, value] of Object.entries(env)) {
     processEnvDefines[`process.env.${key}`] = JSON.stringify(value);
   }
@@ -23,7 +24,7 @@ export default defineConfig(async ({ mode }) => {
     build: {
       rollupOptions: {
         output: {
-          manualChunks(id) {
+          manualChunks(id: string) {
             if (id.includes('node_modules')) {
               if (id.includes('firebase')) return 'firebase';
               if (id.includes('swiper')) return 'swiper';
