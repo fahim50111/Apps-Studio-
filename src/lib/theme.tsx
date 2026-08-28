@@ -23,10 +23,7 @@ function currentMonth(): number {
 }
 
 function systemPrefersDark(): boolean {
-  return (
-    typeof window !== 'undefined' &&
-    window.matchMedia('(prefers-color-scheme: dark)').matches
-  );
+  return typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches;
 }
 
 function resolve(mode: ThemeMode): 'light' | 'dark' {
@@ -66,13 +63,9 @@ function updateFavicon() {
     const svg = buildThemedFaviconSvg();
     const blob = new Blob([svg], { type: 'image/svg+xml' });
     const url = URL.createObjectURL(blob);
-
-    document
-      .querySelectorAll<HTMLLinkElement>('link[rel="icon"], link[rel="shortcut icon"]')
-      .forEach((n) => {
-        if (n.id !== 'app-favicon') n.parentElement?.removeChild(n);
-      });
-
+    document.querySelectorAll<HTMLLinkElement>('link[rel="icon"], link[rel="shortcut icon"]').forEach((n) => {
+      if (n.id !== 'app-favicon') n.parentElement?.removeChild(n);
+    });
     let link = document.getElementById('app-favicon') as HTMLLinkElement | null;
     if (!link) {
       link = document.createElement('link');
@@ -80,7 +73,6 @@ function updateFavicon() {
       document.head.insertBefore(link, document.head.firstChild);
     }
     setIconHref(link, url);
-
     if (lastBlobUrl) URL.revokeObjectURL(lastBlobUrl);
     lastBlobUrl = url;
   } catch (err) {
@@ -151,12 +143,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const setMode = (m: ThemeMode) => setModeState(m);
 
-  return (
-    <Ctx.Provider value={{ mode, resolved, month, setMode }}>{children}</Ctx.Provider>
-  );
+  return <Ctx.Provider value={{ mode, resolved, month, setMode }}>{children}</Ctx.Provider>;
 }
 
-// eslint-disable-next-line react-refresh/only-export-components
 export function useTheme(): ThemeCtx {
   const ctx = useContext(Ctx);
   if (!ctx) throw new Error('useTheme must be used within ThemeProvider');
