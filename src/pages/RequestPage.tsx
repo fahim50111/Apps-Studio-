@@ -5,21 +5,13 @@ import { updateSEO } from '../lib/seo';
 import { LIMITS, openExternal } from '../lib/security';
 import { formatUploadDate } from '../lib/util';
 import { AdBanner } from '../components/AdScripts';
-import {
-  Send,
-  CheckCircle2,
-  Inbox,
-  MessageCircle,
-  Clock3,
-  Loader2,
-  RefreshCw,
-} from 'lucide-react';
+import { Send, CheckCircle2, Inbox, MessageCircle, Clock3, Loader2, RefreshCw } from 'lucide-react';
 
 const WHATSAPP_URL = 'https://wa.me/message/L3EUGB2Q7GHXN1';
 
 function isCompleted(status: string) {
   const s = status.toLowerCase().trim();
-  return ['completed', 'complete', 'done', 'added', 'resolved', 'finished', 'approved'].includes(s);
+  return s === 'completed' || s === 'complete' || s === 'done' || s === 'added' || s === 'resolved' || s === 'finished' || s === 'approved';
 }
 
 function statusLabel(status: string) {
@@ -93,22 +85,9 @@ export default function RequestPage() {
 
       <form onSubmit={submit} className="rounded-3xl border border-line/70 bg-panel p-5">
         <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-mute">App / Game name</label>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value.slice(0, LIMITS.requestName))}
-          maxLength={LIMITS.requestName}
-          placeholder="e.g. Spotify Premium Mod"
-          className="mb-4 w-full rounded-xl border border-line bg-panel2 px-4 py-3 text-sm text-fg outline-none transition placeholder:text-mute focus:border-accent/50"
-        />
+        <input value={name} onChange={(e) => setName(e.target.value.slice(0, LIMITS.requestName))} maxLength={LIMITS.requestName} placeholder="e.g. Spotify Premium Mod" className="mb-4 w-full rounded-xl border border-line bg-panel2 px-4 py-3 text-sm text-fg outline-none transition placeholder:text-mute focus:border-accent/50" />
         <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-mute">Details (optional)</label>
-        <textarea
-          value={note}
-          onChange={(e) => setNote(e.target.value.slice(0, LIMITS.requestNote))}
-          maxLength={LIMITS.requestNote}
-          rows={4}
-          placeholder="Version, features you need, or any notes..."
-          className="mb-4 w-full resize-none rounded-xl border border-line bg-panel2 px-4 py-3 text-sm text-fg outline-none transition placeholder:text-mute focus:border-accent/50"
-        />
+        <textarea value={note} onChange={(e) => setNote(e.target.value.slice(0, LIMITS.requestNote))} maxLength={LIMITS.requestNote} rows={4} placeholder="Version, features you need, or any notes..." className="mb-4 w-full resize-none rounded-xl border border-line bg-panel2 px-4 py-3 text-sm text-fg outline-none transition placeholder:text-mute focus:border-accent/50" />
         <div className="mb-4 -mt-2 text-right text-[10px] text-mute">{note.length}/{LIMITS.requestNote}</div>
         <button type="submit" disabled={status === 'sending' || !name.trim()} className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-3.5 text-sm font-extrabold text-ink transition hover:brightness-110 disabled:opacity-40">
           {status === 'sending' ? 'Sending...' : (<><Send className="h-4 w-4" /> Submit Request</>)}
@@ -143,9 +122,7 @@ export default function RequestPage() {
         </div>
         <div className="rounded-3xl border border-line/70 bg-panel p-4">
           {listLoading ? (
-            <div className="flex items-center justify-center gap-2 py-12 text-sm text-mute">
-              <Loader2 className="h-4 w-4 animate-spin" /> Loading requests…
-            </div>
+            <div className="flex items-center justify-center gap-2 py-12 text-sm text-mute"><Loader2 className="h-4 w-4 animate-spin" /> Loading requests…</div>
           ) : listError ? (
             <div className="rounded-2xl border border-accent3/30 bg-accent3/10 px-4 py-6 text-center text-sm text-accent3">Could not load requests. Deploy Firestore rules, then refresh.</div>
           ) : requests.length === 0 ? (
